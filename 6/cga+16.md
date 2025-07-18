@@ -732,8 +732,6 @@ The choice depends on your specific requirements:
 
 Geometric algebra reveals that much complexity in geometric software stems from fighting against geometry's natural structure. When we align our computational frameworks with geometric reality, simpler and more maintainable systems emerge. The framework doesn't solve all problems, but for the right applications, it can transform architecture from a source of complexity into a source of clarity.
 
-The "shape of computation follows the shape of space"—but only when that alignment serves your engineering goals.
-
 ---
 
 *This is the practitioner's reality: choosing tools that match requirements, understanding tradeoffs, and building systems that work. Geometric algebra is a powerful option in that toolkit, valuable when its strengths align with your needs.*
