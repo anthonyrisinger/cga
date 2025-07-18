@@ -1,18 +1,24 @@
 ### Chapter 10: The Natural Language of Robotics: Motors and Kinematics
 
-You're debugging a robot arm that's supposed to smoothly move a welding tip along a curved seam. The trajectory looks perfect in simulation, but the physical robot stutters and jerks at seemingly random points. After hours of investigation, you discover the culprit: gimbal lock in your Euler angle representation caused a singularity, your quaternion interpolation doesn't account for the coupled translation, and the transformation matrices you're multiplying are accumulating numerical errors that compound with each joint.
+You're debugging a robot arm that's supposed to smoothly move a welding tip along a curved seam. The trajectory looks perfect in simulation, but the physical robot stutters and jerks at seemingly random points. After hours of investigation, you discover multiple culprits: gimbal lock in your Euler angle representation causing a singularity, quaternion interpolation that doesn't properly account for the coupled translation, and transformation matrices accumulating numerical errors that compound with each joint.
 
-This isn't a contrived scenario—it's Tuesday morning in any robotics lab. The mathematical tools we traditionally use for robotics were developed piecemeal: Euler angles for orientation (but they have singularities), quaternions for smooth rotation (but they can't handle translation), homogeneous matrices for general transforms (but they're redundant and numerically unstable), and Denavit-Hartenberg parameters for kinematics (but they're arbitrary and obscure geometric meaning).
+This scenario illustrates genuine challenges in robotics that different mathematical frameworks address with varying degrees of success. Euler angles provide intuitive parameterization but suffer from singularities. Quaternions elegantly handle pure rotation without gimbal lock but can't represent translation. Homogeneous matrices unify transformations but require careful numerical maintenance and obscure the underlying screw motion structure. Dual quaternions handle rigid motions but add conceptual complexity.
 
-Each representation serves a purpose, but converting between them—which happens constantly in real systems—introduces errors, obscures geometric relationships, and makes debugging a nightmare. There must be a better way.
+Geometric algebra offers one particularly elegant approach to these challenges, especially for systems involving complex spatial relationships and unified transformation handling. This chapter explores how motors—the GA representation of rigid body motion—provide a mathematically unified framework, while honestly assessing when this elegance justifies the learning investment and computational overhead.
 
 #### The Screw Motion Revelation
 
-Let's start with a fundamental observation that traditional robotics education often obscures: every rigid body motion is a screw motion. This isn't an approximation or a special case—it's a mathematical fact discovered in the 19th century but rarely exploited in computational practice.
+A fundamental theorem in kinematics states that every rigid body motion is equivalent to a screw motion—a rotation about an axis combined with a translation along that axis. This isn't an approximation but a mathematical fact discovered by Chasles in 1830. Traditional robotics education often presents this as a theoretical curiosity, then proceeds with separate rotation and translation representations that obscure this underlying unity.
 
-Watch a door opening. It rotates around its hinges while simultaneously translating along a helical path. Drop a screw and watch it fall—it rotates as it translates. Even pure rotation is just a screw motion with zero pitch, and pure translation is a screw motion with zero rotation. This universality suggests that screw motions aren't just one type of motion among many—they're the fundamental building block of all rigid motion.
+Watch a door opening. It rotates around its hinges while simultaneously translating along a helical path. Drop a screw and watch it fall—it rotates as it translates. Even pure rotation is just a screw motion with zero pitch, and pure translation is a screw motion with infinite pitch (or equivalently, rotation about an axis at infinity). This mathematical insight suggests that screw motions aren't just one type of motion among many—they're the fundamental building block of all rigid motion.
 
-In traditional robotics, we'd represent this screw motion with a hodgepodge of parameters: an axis direction (3 numbers), a point on the axis (3 more numbers), a rotation angle, and a translation distance. That's 8 parameters for something that has only 6 degrees of freedom. The redundancy isn't just inefficient—it's a source of numerical instability and conceptual confusion.
+Traditional robotics handles screw motions through various representations:
+- **Screw axis coordinates**: 6 parameters (axis direction + point on axis) plus angle and displacement
+- **Homogeneous matrices**: 16 parameters with orthogonality constraints
+- **Dual quaternions**: 8 parameters with unit norm constraints
+- **Twist coordinates**: 6 parameters in se(3) Lie algebra
+
+Each representation works well for specific tasks. The GA motor representation makes screw motion computationally natural while requiring familiarity with bivectors and conformal space—a tradeoff we'll examine in detail.
 
 #### Motors: The Geometric Algebra Solution
 
@@ -20,162 +26,422 @@ In conformal geometric algebra, a screw motion is represented by a single mathem
 
 $$M = \exp\left(-\frac{1}{2}(\theta L^* + d\mathbf{n}_\infty)\right)$$
 
-Let's unpack this formula to see why it's so powerful. The term $L$ represents the screw axis as a line in conformal space—not just a direction, but a complete geometric entity that knows where it is in space. The angle $\theta$ is the rotation around this axis, and $d$ is the translation along it. The exponential map turns this "infinitesimal screw" into a finite transformation.
+Let's unpack this formula to understand both its elegance and its requirements. The term $L$ represents the screw axis as a line in conformal space—not just a direction, but a complete geometric entity that knows where it is in space. The angle $\theta$ is the rotation around this axis, and $d$ is the translation along it. The exponential map turns this "infinitesimal screw" into a finite transformation.
 
-But here's the key insight: this isn't just a compact notation. The motor $M$ acts on any geometric object—points, lines, planes, spheres—through the same sandwich product:
+The motor $M$ acts on any geometric object—points, lines, planes, spheres—through the sandwich product:
 
 $$X' = MXM^{-1}$$
 
-No special cases. No different formulas for different object types. The same motor that rotates a point also correctly transforms lines, planes, and even other motors. This universality is what makes motors the natural language for robotics.
+This uniformity is powerful: the same motor correctly transforms all geometric primitives without special cases. However, this power comes with costs:
+
+**Advantages of Motors:**
+- Unified representation of all rigid motions
+- Natural composition through multiplication
+- Smooth interpolation without singularities
+- No gimbal lock or coordinate singularities
+- Direct geometric interpretation
+
+**Costs and Requirements:**
+- 8 floats storage (vs 7 for dual quaternions, 4 for quaternions + 3 for translation)
+- Requires understanding of bivectors and the exponential map
+- Needs conformal geometric algebra (5D representation for 3D space)
+- Less familiar to robotics practitioners
+- Limited library support compared to traditional methods
+
+For simple robotic systems doing pure rotations or translations, traditional methods often suffice. Motors excel when dealing with complex coordinated movements, long kinematic chains where numerical stability matters, or applications requiring smooth trajectory interpolation.
 
 #### Forward Kinematics: From Joint Angles to End-Effector Pose
 
-Let's see how this transforms a fundamental robotics problem. Consider a 6-DOF industrial robot arm. In the traditional approach, you'd assign coordinate frames to each link using Denavit-Hartenberg parameters, build 4×4 transformation matrices for each joint, and multiply them together. The result is a 4×4 matrix that you hope is still approximately orthogonal after all that numerical computation.
+Consider a 6-DOF industrial robot arm. The traditional approach uses Denavit-Hartenberg parameters—a systematic method for assigning coordinate frames that, despite its arbitrariness, has become the industry standard. For each joint, four parameters $(a_i, \alpha_i, d_i, \theta_i)$ define the transformation to the next link.
 
-With motors, the process becomes geometrically transparent. Each joint has an associated motor that depends on the joint angle:
+**Traditional DH Approach:**
+```python
+def forward_kinematics_dh(dh_params, joint_angles):
+    """Compute end-effector pose using DH parameters.
 
-For a revolute joint rotating by angle $q_i$ around axis $L_i$:
-$$M_i = \exp\left(-\frac{q_i L_i^*}{2}\right)$$
+    Well-established, widely supported, familiar to engineers.
+    """
+    T_total = identity_matrix_4x4()
 
-For a prismatic joint translating by distance $q_i$ along direction $\mathbf{d}_i$:
-$$M_i = \exp\left(-\frac{q_i \mathbf{d}_i \mathbf{n}_\infty}{2}\right)$$
+    for i in range(len(joint_angles)):
+        a, alpha, d, theta = dh_params[i]
 
-The forward kinematics—finding the end-effector pose given joint angles—is simply:
+        # For revolute joints, add joint angle to theta
+        if joint_types[i] == 'revolute':
+            theta = theta + joint_angles[i]
+        else:  # prismatic
+            d = d + joint_angles[i]
 
-$$M_{\text{total}} = M_n M_{n-1} \cdots M_2 M_1$$
+        # Build transformation matrix
+        T_i = dh_transformation_matrix(a, alpha, d, theta)
+        T_total = matrix_multiply(T_total, T_i)
 
-This motor composition naturally preserves the rigid body constraint. There's no need to re-orthogonalize rotation matrices or worry about the bottom row of homogeneous matrices. The geometric constraints are built into the algebra.
+    return T_total
+```
+
+**Motor-Based Approach:**
+```python
+def forward_kinematics_motors(joint_motors, joint_values):
+    """Compute end-effector pose using motors.
+
+    Geometrically transparent, numerically stable, but requires GA knowledge.
+    """
+    M_total = identity_motor()
+
+    for i in range(len(joint_values)):
+        if joint_types[i] == 'revolute':
+            # Construct rotor for rotation about joint axis
+            M_i = construct_rotor(joint_axes[i], joint_values[i])
+        else:  # prismatic
+            # Construct translator along joint direction
+            M_i = construct_translator(joint_directions[i], joint_values[i])
+
+        # Compose transformations
+        M_total = geometric_product(M_total, M_i)
+
+    return M_total
+```
+
+Both approaches work. The DH method benefits from decades of tooling, documentation, and practitioner familiarity. The motor approach offers clearer geometric interpretation and better numerical stability for long kinematic chains, but requires teams to learn GA. For simple manipulators with well-conditioned kinematics, the traditional approach may be more straightforward to implement and debug.
 
 #### A Concrete Example: SCARA Robot Kinematics
 
-Let's work through a specific example to see the power of this approach. A SCARA (Selective Compliance Assembly Robot Arm) robot has four joints: two revolute joints for planar positioning, one prismatic joint for vertical motion, and one revolute joint for end-effector orientation.
+Let's examine both approaches for a SCARA (Selective Compliance Assembly Robot Arm) robot—a common configuration in manufacturing with two revolute joints for planar positioning, one prismatic joint for vertical motion, and one revolute joint for end-effector orientation.
 
-In traditional notation, you'd need:
-- DH parameters: $(a_1, \alpha_1, d_1, \theta_1)$ for each joint
-- Transformation matrices: $T_i = \text{Rot}_z(\theta_i)\text{Trans}_z(d_i)\text{Trans}_x(a_i)\text{Rot}_x(\alpha_i)$
-- Matrix multiplication: $T_{\text{total}} = T_1 T_2 T_3 T_4$
+**Traditional DH Parameters:**
+```
+Link | a_i  | alpha_i | d_i | theta_i
+-----|------|---------|-----|--------
+1    | a_1  | 0       | d_1 | theta_1*
+2    | a_2  | 0       | 0   | theta_2*
+3    | 0    | 0       | d_3*| 0
+4    | 0    | 0       | d_4 | theta_4*
+(* = variable)
+```
 
-With motors, the geometry is explicit:
-- Joint 1: Rotation around vertical axis through base
-  $$M_1 = \exp\left(-\frac{q_1}{2}\mathbf{e}_{12}\right)$$
-- Joint 2: Rotation around vertical axis through link 1 end
-  $$M_2 = \exp\left(-\frac{q_2}{2}L_2^*\right)$$ where $L_2$ is displaced by link 1
-- Joint 3: Vertical translation
-  $$M_3 = \exp\left(-\frac{q_3}{2}\mathbf{e}_3\mathbf{n}_\infty\right)$$
-- Joint 4: Rotation around vertical through end-effector
-  $$M_4 = \exp\left(-\frac{q_4}{2}\mathbf{e}_{12}\right)$$
+**Traditional Implementation:**
+```python
+def scara_forward_kinematics_traditional(q1, q2, d3, q4, params):
+    """SCARA kinematics using DH convention."""
+    a1, a2, d1, d4 = params['a1'], params['a2'], params['d1'], params['d4']
 
-The total transformation is:
-$$M_{\text{total}} = M_4 M_3 M_2 M_1$$
+    # Joint 1: Rotation about z
+    T1 = create_dh_matrix(a1, 0, d1, q1)
 
-But here's where it gets interesting. To find the end-effector position, we simply transform the origin:
-$$P_{\text{end}} = M_{\text{total}} \mathbf{n}_0 M_{\text{total}}^{-1}$$
+    # Joint 2: Rotation about z
+    T2 = create_dh_matrix(a2, 0, 0, q2)
 
-To find the final orientation, we can extract the rotor part of the motor. The screw axis tells us about instantaneous motion possibilities. All of this geometric information is encoded in a single motor.
+    # Joint 3: Translation along z
+    T3 = create_dh_matrix(0, 0, d3, 0)
+
+    # Joint 4: Rotation about z
+    T4 = create_dh_matrix(0, 0, d4, q4)
+
+    # Total transformation
+    T_total = T1 @ T2 @ T3 @ T4
+
+    return T_total
+```
+
+**Motor-Based Implementation:**
+```python
+def scara_forward_kinematics_motors(q1, q2, d3, q4, params):
+    """SCARA kinematics using motor algebra."""
+    a1, a2, d1, d4 = params['a1'], params['a2'], params['d1'], params['d4']
+
+    # Base motor includes fixed vertical offset
+    M0 = construct_translator([0, 0, d1])
+
+    # Joint 1: Rotation around vertical axis through base
+    axis1 = construct_line(origin, z_direction)
+    M1 = construct_motor_from_axis(axis1, q1, 0)
+
+    # Joint 2: Rotation around vertical axis displaced by link 1
+    # First translate to joint 2 position
+    T_link1 = construct_translator([a1, 0, 0])
+    M2_axis = apply_motor(M1 @ T_link1, construct_line(origin, z_direction))
+    M2 = construct_motor_from_axis(M2_axis, q2, 0)
+
+    # Joint 3: Pure translation along z
+    M3 = construct_translator([0, 0, d3])
+
+    # Joint 4: Rotation around vertical axis at end-effector
+    T_link2 = construct_translator([a2, 0, 0])
+    M4_axis = apply_motor(M1 @ T_link1 @ M2 @ T_link2,
+                         construct_line(origin, z_direction))
+    M4 = construct_motor_from_axis(M4_axis, q4, 0)
+
+    # Total transformation
+    M_total = M0 @ M1 @ T_link1 @ M2 @ T_link2 @ M3 @ M4
+
+    return M_total
+```
+
+**Comparison:**
+- **DH matrices**: More compact, familiar to robotics engineers, extensive tool support
+- **Motors**: Explicit geometric construction, natural screw motion interpolation, but more verbose
+
+The motor approach makes the geometry explicit—each joint's axis is constructed in its actual location. This clarity helps when debugging complex robots but requires more setup code. For a production SCARA controller, either approach works well. The motor approach shines when you need smooth trajectory interpolation or are building a system that handles many different robot types uniformly.
 
 #### The Jacobian: Relating Joint Velocities to End-Effector Motion
 
-The Jacobian matrix is central to robot control, relating joint velocities to end-effector velocities. Traditional approaches build this as a 6×n matrix mixing linear and angular velocity components in an ad-hoc way. Geometric algebra reveals the natural structure.
+The Jacobian matrix is central to robot control, relating joint velocities to end-effector velocities. Traditional approaches build this as a 6×n matrix mixing linear and angular velocity components, often requiring careful bookkeeping about reference frames.
 
-For a robot with motors $M_i$ for each joint, the instantaneous motion from joint $i$ is characterized by its screw axis at the current configuration. If joint $i$ has motor generator $B_i$ (a bivector), then after transformation by the preceding joints, its effect at the end-effector is:
+**Traditional Jacobian:**
+```python
+def compute_jacobian_traditional(joint_angles, dh_params):
+    """Build 6×n Jacobian matrix [v; ω] = J q̇"""
+    n = len(joint_angles)
+    J = zeros((6, n))
 
-$$\mathcal{J}_i = (M_{i-1} \cdots M_1) B_i (M_{i-1} \cdots M_1)^{-1}$$
+    # Forward kinematics to get intermediate transforms
+    T = [identity_matrix()]
+    for i in range(n):
+        T_i = dh_transformation(dh_params[i], joint_angles[i])
+        T.append(T[-1] @ T_i)
 
-This $\mathcal{J}_i$ is a bivector encoding both the instantaneous rotation axis and the coupled translation. The geometric Jacobian relates joint velocities $\dot{q}$ to the end-effector velocity bivector:
+    # End-effector position
+    p_end = T[-1][:3, 3]
 
-$$\Omega = \sum_{i=1}^n \dot{q}_i \mathcal{J}_i$$
+    for i in range(n):
+        if joint_types[i] == 'revolute':
+            # Joint axis in world frame
+            z_i = T[i][:3, :3] @ [0, 0, 1]
+            # Position of joint i
+            p_i = T[i][:3, 3]
 
-This bivector $\Omega$ naturally combines what traditional approaches separate into linear velocity $\mathbf{v}$ and angular velocity $\boldsymbol{\omega}$. To extract these traditional components:
-- Angular velocity: The grade-2 part of $\Omega$ directly
-- Linear velocity: $(\Omega \cdot \mathbf{n}_\infty) \wedge \mathbf{n}_\infty$
+            # Linear velocity component: v = z × (p_end - p_i)
+            J[:3, i] = cross_product(z_i, p_end - p_i)
+            # Angular velocity component
+            J[3:, i] = z_i
+        else:  # prismatic
+            # Joint axis in world frame
+            z_i = T[i][:3, :3] @ [0, 0, 1]
 
-But often we don't need to extract them—we can work directly with the unified bivector representation.
+            # Linear velocity component
+            J[:3, i] = z_i
+            # No angular velocity from prismatic joint
+            J[3:, i] = [0, 0, 0]
+
+    return J
+```
+
+**Geometric Jacobian using Motors:**
+```python
+def compute_jacobian_geometric(joint_motors, current_config):
+    """Build geometric Jacobian as bivector fields."""
+    n = len(joint_motors)
+    jacobian_bivectors = []
+
+    # Current motor to each joint
+    M_cumulative = identity_motor()
+
+    for i in range(n):
+        # Transform joint axis to current configuration
+        if joint_types[i] == 'revolute':
+            # Rotation axis as line in current config
+            axis_i = apply_motor(M_cumulative, joint_axes[i])
+            # Bivector generator for rotation
+            B_i = line_to_bivector(axis_i)
+        else:  # prismatic
+            # Translation direction in current config
+            dir_i = apply_motor(M_cumulative, joint_directions[i])
+            # Bivector generator for translation
+            B_i = vector_to_translation_bivector(dir_i)
+
+        jacobian_bivectors.append(B_i)
+
+        # Update cumulative transformation
+        M_cumulative = M_cumulative @ joint_motors[i]
+
+    return jacobian_bivectors
+```
+
+The geometric Jacobian provides unified treatment of linear and angular velocities through bivectors, naturally handling the screw motion structure. However, most control systems expect traditional 6-vector velocities, requiring extraction:
+
+```python
+def extract_twist_from_bivector(omega_bivector, reference_point):
+    """Convert geometric velocity to traditional [v; ω] format."""
+    # Angular velocity is the bivector's projection to rotation subspace
+    omega = extract_angular_velocity(omega_bivector)
+
+    # Linear velocity includes contribution from rotation
+    v = extract_linear_velocity(omega_bivector, reference_point)
+
+    return concatenate([v, omega])
+```
+
+**When Each Approach Excels:**
+- **Traditional**: Direct interface with existing controllers, familiar to engineers, efficient for simple tasks
+- **Geometric**: Natural for screw motion tasks, singularity analysis through bivector rank, unified framework
+
+The choice depends on your system's needs. For interfacing with standard industrial controllers, the traditional Jacobian is necessary. For research robotics exploring new control algorithms or systems requiring geometric insight into singularities, the bivector approach offers advantages.
 
 #### Inverse Kinematics: From Desired Pose to Joint Angles
 
-Inverse kinematics—finding joint angles to achieve a desired end-effector pose—is notoriously difficult in traditional formulations. You're trying to solve nonlinear equations while avoiding singularities and staying within joint limits. Geometric algebra provides new tools for this challenge.
+Inverse kinematics—finding joint angles to achieve a desired end-effector pose—remains challenging regardless of representation. Most industrial robots use well-tested numerical solvers based on the Jacobian transpose, damped least squares, or optimization methods. These work reliably within the robot's design constraints.
 
-Given a desired motor $M_{\text{desired}}$ and current motor $M_{\text{current}}$, the error is:
+**Traditional Newton-Raphson IK:**
+```python
+def inverse_kinematics_traditional(T_desired, q_init, params):
+    """Standard numerical IK using Jacobian iteration."""
+    q = q_init
+    max_iter = 100
+    tolerance = 1e-6
 
-$$M_{\text{error}} = M_{\text{desired}} M_{\text{current}}^{-1}$$
+    for iteration in range(max_iter):
+        # Current pose
+        T_current = forward_kinematics_dh(params, q)
 
-This error motor can be converted to an error bivector via the logarithm:
+        # Position and orientation errors
+        pos_error = T_desired[:3, 3] - T_current[:3, 3]
+        R_error = T_desired[:3, :3] @ T_current[:3, :3].T
+        orient_error = rotation_matrix_to_axis_angle(R_error)
 
-$$\mathcal{B}_{\text{error}} = 2\log(M_{\text{error}})$$
+        # Stack into 6D error vector
+        error = concatenate([pos_error, orient_error])
 
-This bivector directly encodes both position and orientation error in a unified way. The magnitude tells us how far we are from the goal, and the bivector structure tells us the screw motion needed to get there.
+        if norm(error) < tolerance:
+            return q  # Converged
 
-The iterative solution becomes:
-1. Compute current configuration motor $M_{\text{current}}$ from joint angles
-2. Find error motor and convert to error bivector
-3. Use the Jacobian to find joint velocities: $\dot{q} = J^+ \mathcal{B}_{\text{error}}$
-4. Update joint angles: $q \leftarrow q + \alpha \dot{q}$ with step size $\alpha$
-5. Repeat until error is sufficiently small
+        # Jacobian at current configuration
+        J = compute_jacobian_traditional(q, params)
 
-The geometric nature of this formulation helps avoid singularities. When the Jacobian loses rank, it means certain motions aren't possible—the error bivector naturally projects onto the feasible motion space.
+        # Damped least squares update
+        lambda_damping = 0.01
+        J_damped = J.T @ inv(J @ J.T + lambda_damping * eye(6))
+        delta_q = J_damped @ error
 
-**Table 35: Robot Configuration Atlas**
+        # Update joint angles
+        q = q + 0.5 * delta_q  # Step size for stability
 
-Understanding how different robot types map to motor representations helps in practical implementation:
+    return None  # Failed to converge
+```
 
-| Robot Type | Configuration | Motor Decomposition | Workspace | Special Properties |
-|------------|---------------|-------------------|-----------|-------------------|
-| SCARA | RRPR | $M_{\theta_1}M_{\theta_2}T_zM_{\theta_3}$ | Cylindrical | Fast pick-and-place, 4 DOF |
-| 6R Anthropomorphic | RRRRRR | $\prod_{i=1}^6 M_{\theta_i}$ | Complex 3D region | Dexterous, singularities at reach limits |
-| Stanford Arm | RRPRRR | $M_{\theta_1}M_{\theta_2}T_rM_{\theta_3}M_{\theta_4}M_{\theta_5}$ | Spherical + extensions | Historical design, good for teaching |
-| Cartesian | PPP | $T_xT_yT_z$ | Rectangular box | Simple kinematics, limited orientation |
-| Delta Parallel | 3-RRR + platform | Constraint equations | Limited translation | High speed, high stiffness |
-| Stewart Platform | 6-UPS | 6 constraint motors | Full 6 DOF | Parallel, high precision |
-| PUMA 560 | RRRRRR | Specific joint axes | Offset spherical | Classic industrial design |
-| UR Series | RRRRRR | Non-intersecting wrists | Large workspace | Collaborative, no singular sphere |
+**Motor-Based IK:**
+```python
+def inverse_kinematics_motors(M_desired, q_init, joint_data):
+    """IK using motor error and geometric optimization."""
+    q = q_init
+    max_iter = 100
+    tolerance = 1e-6
 
-Each configuration has natural motor representations that make their kinematics transparent. The key is identifying the screw axes and building appropriate motors.
+    for iteration in range(max_iter):
+        # Current configuration motor
+        M_current = forward_kinematics_motors(joint_data, q)
 
-#### Differential Kinematics and Dynamics
+        # Error motor captures full rigid body error
+        M_error = M_desired @ inverse_motor(M_current)
 
-CGA naturally expresses instantaneous kinematics through the language of bivectors and commutators. For a moving frame with motor $M(t)$, the velocity bivector is:
+        # Convert to error bivector (element of Lie algebra)
+        B_error = motor_logarithm(M_error)
+        error_magnitude = bivector_norm(B_error)
 
-$$\Omega = 2\dot{M}M^{-1}$$
+        if error_magnitude < tolerance:
+            return q  # Converged
 
-This bivector decomposes into:
-- Angular velocity: $\omega = \langle \Omega \rangle_2$ (the grade-2 part)
-- Linear velocity: $\mathbf{v} = (\Omega \cdot \mathbf{n}_\infty) \cdot \mathbf{n}_\infty^{-1}$
+        # Geometric Jacobian
+        J_geometric = compute_jacobian_geometric(joint_data, q)
 
-The acceleration bivector follows as:
+        # Project error onto joint motion subspace
+        # This naturally handles singularities
+        delta_q = solve_geometric_least_squares(J_geometric, B_error)
 
-$$\alpha = 2(\ddot{M}M^{-1} - \frac{1}{2}\Omega^2)$$
+        # Update with adaptive step size
+        step_size = min(0.5, 1.0 / error_magnitude)
+        q = q + step_size * delta_q
 
-These formulas unify linear and angular motion in a single framework. Traditional approaches require separate treatment of linear and angular components, but CGA reveals their deep unity.
+    return None  # Failed to converge
+```
 
-**Table 36: Jacobian Computation Methods**
+**Key Differences:**
+- **Error Representation**: Motors capture position and orientation error in a single geometric object
+- **Singularity Handling**: The bivector formulation naturally projects onto feasible motions
+- **Interpolation**: Motor interpolation provides geometrically consistent intermediate poses
 
-Different approaches to computing the Jacobian have different trade-offs:
+However, these advantages come with costs. The motor approach requires understanding of:
+- Motor logarithms and exponentials
+- Bivector projection operations
+- Geometric least squares in the Lie algebra
 
-| Method | Traditional Approach | CGA Approach | Computational Advantage |
-|--------|---------------------|--------------|------------------------|
-| Numerical Differentiation | Finite differences on poses | Finite differences on motors | Better conditioning |
-| Analytical Jacobian | Symbolic differentiation of DH matrices | Motor product rule | More compact expressions |
-| Geometric Jacobian | Cross products and moment arms | Transformed screw axes | Direct geometric meaning |
-| Body Jacobian | Adjoint transformation | Right motor multiplication | Natural in body frame |
-| Spatial Jacobian | Complex frame conversions | Left motor multiplication | Natural in space frame |
-| Hybrid Jacobian | Mixed representations | Grade projection of bivector | Unified framework |
-| Screw Jacobian | 6×n matrix of Plücker coordinates | n bivectors | Geometric clarity |
-| Reduced Jacobian | SVD and rank analysis | Wedge product analysis | Detects dependencies |
-
-The geometric method using transformed screw axes is both efficient and numerically stable, making it ideal for real-time applications.
+For robots with well-understood kinematics and existing IK solutions, the traditional approach is often more practical. The motor approach shines for:
+- Complex robots with many degrees of freedom
+- Tasks requiring smooth Cartesian trajectories
+- Systems where geometric insight helps avoid singularities
+- Research into new IK algorithms
 
 #### Singularities and Their Detection
 
-Kinematic singularities occur when the robot loses degrees of freedom—certain motions become impossible. Traditional detection uses the determinant of the Jacobian matrix, but this gives little geometric insight. In GA, singularities occur when the screw axes become linearly dependent.
+Kinematic singularities occur when the robot loses degrees of freedom—certain motions become impossible. Traditional detection uses the determinant or singular values of the Jacobian matrix. In GA, singularities manifest as linear dependence of the Jacobian bivectors.
 
-The geometric criterion for singularity is:
-$$\mathcal{J}_1 \wedge \mathcal{J}_2 \wedge \cdots \wedge \mathcal{J}_n = 0$$
+**Traditional Singularity Analysis:**
+```python
+def analyze_singularity_traditional(J):
+    """Detect singularity via SVD of Jacobian."""
+    U, S, V = svd(J)
 
-This wedge product vanishes when the Jacobian bivectors are linearly dependent. Moreover, the magnitude of this wedge product provides a geometric measure of distance from singularity—more meaningful than condition numbers.
+    # Minimum singular value indicates distance from singularity
+    sigma_min = S[-1]
+
+    # Manipulability measure
+    manipulability = sqrt(det(J @ J.T))
+
+    # Lost DOF directions
+    if sigma_min < 1e-6:
+        null_space = V[:, -1]  # Last column of V
+        return {
+            'singular': True,
+            'manipulability': manipulability,
+            'lost_direction': null_space
+        }
+
+    return {
+        'singular': False,
+        'manipulability': manipulability,
+        'condition_number': S[0] / S[-1]
+    }
+```
+
+**Geometric Singularity Detection:**
+```python
+def analyze_singularity_geometric(J_bivectors):
+    """Detect singularity through bivector dependence."""
+    n = len(J_bivectors)
+
+    # Wedge product of all Jacobian bivectors
+    # Vanishes when they're linearly dependent
+    wedge_product = J_bivectors[0]
+    for i in range(1, n):
+        wedge_product = outer_product(wedge_product, J_bivectors[i])
+
+    # Magnitude indicates distance from singularity
+    wedge_magnitude = multivector_norm(wedge_product)
+
+    if wedge_magnitude < 1e-6:
+        # Find dependent bivectors
+        dependencies = find_bivector_dependencies(J_bivectors)
+        return {
+            'singular': True,
+            'wedge_magnitude': wedge_magnitude,
+            'dependencies': dependencies,
+            'geometric_interpretation': interpret_singularity(dependencies)
+        }
+
+    return {
+        'singular': False,
+        'wedge_magnitude': wedge_magnitude,
+        'condition_measure': compute_bivector_condition(J_bivectors)
+    }
+```
+
+The geometric approach provides insight into the nature of the singularity:
+- **Wrist singularities**: Multiple rotation axes become coplanar
+- **Elbow singularities**: Arm fully extended, losing ability to change reach
+- **Shoulder singularities**: Certain orientations become unreachable
+
+Both methods work, but the geometric approach can suggest avoidance strategies based on the type of dependence detected.
 
 **Table 37: Singularity Detection**
-
-Common singularity types and their geometric characteristics:
 
 | Singularity Type | Geometric Condition | Physical Meaning | Detection Method | Avoidance Strategy |
 |-----------------|-------------------|------------------|------------------|-------------------|
@@ -184,25 +450,57 @@ Common singularity types and their geometric characteristics:
 | Shoulder Singularity | Wrist directly above shoulder | Lost azimuth control | $L_1 \parallel (P_{\text{wrist}} - P_{\text{base}})$ | Offset path planning |
 | Alignment Singularity | Two axes become parallel | Redundant rotation | $L_i \wedge L_j = 0$ | Joint limit design |
 | Platform Singularity | Stewart platform coplanar | Lost spatial control | Constraint motors coplanar | Workspace restriction |
-| Algorithmic Singularity | Gimbal lock in representation | Mathematical artifact | None in CGA! | Natural benefit |
+| Algorithmic Singularity | Gimbal lock in representation | Mathematical artifact | None in motors! | Natural GA benefit |
 | Dynamic Singularity | Inertia matrix singular | Cannot accelerate | Motor decomposition reveals | Trajectory timing adjustment |
 | Force Singularity | Cannot resist certain wrenches | Static instability | Dual of velocity Jacobian rank | Compliance control |
 
-Understanding singularities geometrically leads to better avoidance strategies than purely numerical approaches.
-
 #### Path Planning in Motor Space
 
-Traditional path planning often separates position and orientation, planning each independently then trying to coordinate them. This can lead to unnatural motions. Planning directly in motor space produces naturally coordinated movements.
+Path planning benefits from the motor representation's natural interpolation properties, though this must be balanced against computational complexity.
 
-Given start motor $M_1$ and goal motor $M_2$, the geodesic path in motor space is:
+**Traditional Joint Space Planning:**
+```python
+def plan_joint_trajectory(q_start, q_goal, waypoints=None):
+    """Plan smooth trajectory in joint space."""
+    if waypoints is None:
+        # Simple cubic polynomial
+        return cubic_spline_interpolation(q_start, q_goal)
+    else:
+        # Fit spline through waypoints
+        return fit_joint_spline(q_start, waypoints, q_goal)
+```
 
-$$M(t) = M_1 \exp(t \log(M_1^{-1} M_2))$$
+**Motor Space Planning:**
+```python
+def plan_motor_trajectory(M_start, M_goal, constraints=None):
+    """Plan trajectory directly in SE(3) using motors."""
+    # Relative motor from start to goal
+    M_relative = inverse_motor(M_start) @ M_goal
 
-This produces constant-speed screw motion—the "straightest" path in SE(3). For obstacle avoidance, we can use potential fields in motor space or sampling-based planners that respect the motor manifold structure.
+    # Logarithm gives screw axis and magnitude
+    B_screw = motor_logarithm(M_relative)
+
+    if constraints is None:
+        # Direct screw motion - optimal in absence of obstacles
+        def trajectory(t):
+            # Geodesic interpolation
+            return M_start @ motor_exponential(t * B_screw)
+    else:
+        # Plan considering constraints
+        # Sample intermediate motors respecting constraints
+        M_waypoints = sample_constrained_motors(M_start, M_goal, constraints)
+
+        # Smooth interpolation through waypoints
+        return smooth_motor_spline(M_waypoints)
+
+    return trajectory
+```
+
+**Tradeoffs:**
+- **Joint space**: Simple, respects joint limits naturally, but Cartesian path unclear
+- **Motor space**: Natural Cartesian interpolation, no singularities, but requires IK at each point
 
 **Table 38: Path Interpolation Schemes**
-
-Different applications require different path characteristics:
 
 | Scheme | Mathematical Form | Smoothness | Computational Cost | Applications |
 |--------|------------------|------------|-------------------|--------------|
@@ -215,190 +513,400 @@ Different applications require different path characteristics:
 | Geodesic | True Riemannian geodesic | Globally shortest | High | Energy-optimal paths |
 | Polynomial | $M(t) = \prod_i \exp(p_i(t)B_i)$ | Arbitrary constraints | Variable | Task-space planning |
 
-The choice depends on requirements for smoothness, computation time, and trajectory constraints.
-
 #### Dynamics Extension
 
-While kinematics ignores forces, real robots must account for dynamics. CGA extends naturally from kinematics to dynamics by recognizing that momentum and forces are also geometric quantities.
+While kinematics ignores forces, real robots must account for dynamics. Traditional approaches use Newton-Euler or Lagrangian formulations with separate treatment of forces and torques.
 
-A rigid body's momentum combines linear momentum $\mathbf{p} = m\mathbf{v}$ and angular momentum $\mathbf{L} = I\omega$. In CGA, these unite as a single momentum bivector:
+**Traditional Dynamics:**
+```python
+def compute_joint_torques_newton_euler(q, q_dot, q_ddot, params):
+    """Recursive Newton-Euler for joint torques."""
+    n = len(q)
 
-$$\mathcal{P} = m(\mathbf{v} \wedge \mathbf{n}_0) + \mathbf{L}$$
+    # Forward recursion: velocities and accelerations
+    v = [zeros(3)]  # Linear velocities
+    w = [zeros(3)]  # Angular velocities
+    a = [gravity]   # Linear accelerations
+    alpha = [zeros(3)]  # Angular accelerations
 
-This bivector transforms covariantly under motors: $\mathcal{P}' = M\mathcal{P}M^{-1}$.
+    for i in range(n):
+        # Transform to next link...
+        # (Traditional recursive formulation)
 
-Similarly, forces and torques combine into a wrench bivector:
+    # Backward recursion: forces and torques
+    f = [zeros(3) for _ in range(n+1)]  # Forces
+    tau = [zeros(3) for _ in range(n+1)]  # Torques
 
-$$\mathcal{W} = \mathbf{f} \wedge \mathbf{n}_0 + \boldsymbol{\tau}$$
+    for i in range(n-1, -1, -1):
+        # Compute forces and torques...
+        # Extract joint torque
 
-Newton's second law becomes:
+    return joint_torques
+```
 
-$$\dot{\mathcal{P}} = \mathcal{W}$$
+**Motor-Based Dynamics:**
+```python
+def compute_dynamics_motors(M, V, A, params):
+    """Dynamics using motor formulation and bivector momentum."""
+    # Current configuration
+    motors_to_links = compute_link_motors(M)
 
-This single equation encompasses both linear ($\mathbf{f} = m\mathbf{a}$) and angular ($\boldsymbol{\tau} = I\boldsymbol{\alpha} + \omega \times I\omega$) dynamics.
+    # Velocity and acceleration bivectors
+    V_links = [transform_velocity_bivector(V, m) for m in motors_to_links]
+    A_links = [transform_acceleration_bivector(A, V, m) for m in motors_to_links]
+
+    # Momentum bivector for each link
+    P_links = []
+    for i, (V_i, params_i) in enumerate(zip(V_links, params.links)):
+        # Inertia operator maps velocity to momentum bivector
+        I_i = construct_inertia_operator(params_i.mass, params_i.inertia_tensor)
+        P_i = apply_inertia_operator(I_i, V_i)
+        P_links.append(P_i)
+
+    # Wrench bivector (forces and torques unified)
+    W_total = compute_total_wrench(P_links, A_links, external_forces)
+
+    # Project onto joint axes to get torques
+    joint_torques = []
+    for i, axis in enumerate(joint_axes):
+        tau_i = project_wrench_to_axis(W_total, axis)
+        joint_torques.append(tau_i)
+
+    return joint_torques
+```
+
+**Conceptual Advantages of Motor Dynamics:**
+- Forces and torques unite as wrench bivectors
+- Momentum is naturally a bivector quantity
+- Coordinate-free formulation
+
+**Practical Considerations:**
+- Most robotics dynamics engines optimize for traditional representations
+- Significant infrastructure would need rebuilding
+- Performance benefits unclear without careful optimization
+- Conceptual clarity may not justify implementation effort
+
+For production robotics, traditional dynamics formulations remain practical. The motor approach offers theoretical insights and may enable new algorithms, particularly for systems with complex contact interactions or multi-body dynamics.
 
 #### Practical Implementation Strategies
 
-Efficient implementation of CGA-based robotics requires careful attention to computational patterns:
+Implementing motor-based robotics requires careful attention to practical details:
 
-**Motor Caching**: Joint motors often repeat for standard configurations
-```
-Structure: Motor Cache
-- Key: Joint configuration vector q
-- Value: Computed motor M
-- Update: LRU replacement policy
-- Benefit: 10-100× speedup for repeated poses
+**Motor Caching:**
+```python
+class MotorCache:
+    """Cache frequently used motor computations."""
+    def __init__(self, cache_size=1000):
+        self.cache = LRUCache(cache_size)
+        self.hit_count = 0
+        self.miss_count = 0
+
+    def get_motor(self, joint_config):
+        key = tuple(joint_config)
+        if key in self.cache:
+            self.hit_count += 1
+            return self.cache[key]
+        else:
+            self.miss_count += 1
+            motor = compute_forward_kinematics_motors(joint_config)
+            self.cache[key] = motor
+            return motor
 ```
 
-**Sparse Screw Axes**: Joint axes in base frame are sparse bivectors
-```
-Structure: Sparse Line Representation
-- Direction: 3 nonzero components
-- Moment: 3 nonzero components
-- Storage: 6 floats vs 10 for general bivector
-- Operations: Optimized motor construction
+**Sparse Screw Axes:**
+```python
+def encode_screw_axis_sparse(origin, direction, pitch=0):
+    """Efficiently encode screw axis as sparse bivector."""
+    # Only 6 non-zero components for a line in CGA
+    # Plus pitch information for full screw
+    sparse_data = {
+        'origin': origin,  # 3 floats
+        'direction': normalize(direction),  # 3 floats
+        'pitch': pitch  # 1 float
+    }
+    return sparse_data
 ```
 
-**SIMD Parallelization**: Motor products vectorize naturally
-```
-SIMD Strategy:
-- Pack 4 motors in 256-bit registers
-- Parallel rotor-rotor multiplication
-- Broadcast for sandwich products
-- 4× throughput on modern CPUs
-```
+**Current Limitations:**
+- **Library Support**: Few robotics libraries natively support GA
+- **Team Training**: Significant learning curve for developers
+- **Tool Integration**: CAD, simulation tools use traditional representations
+- **Performance**: Optimized traditional libraries often outperform naive GA
+- **Debugging**: Less intuitive for engineers trained on matrices
+
+**When These Limitations Matter Less:**
+- Research environments exploring new algorithms
+- Systems already using GA for other components
+- Applications where numerical stability is critical
+- Educational contexts where conceptual clarity matters
 
 #### Case Study: Surgical Robot Control
 
-Consider a surgical robot requiring sub-millimeter precision. Traditional approaches struggle with:
-- Coordinate frame proliferation near the tool tip
-- Numerical errors in long kinematic chains
-- Difficult interpolation in constrained spaces
+Consider a surgical robot requiring sub-millimeter precision—a domain where GA's benefits can clearly outweigh its costs.
 
-The CGA solution elegantly handles these challenges:
+**Requirements:**
+- Remote center of motion (RCM) constraint
+- Tool orientation limits for safety
+- Smooth motion despite mechanical constraints
+- Numerical stability over long procedures
 
-1. **Remote Center of Motion**: The robot must pivot around a fixed point (incision). In CGA, this constraint is simply that all valid motors leave the pivot point invariant: $MP_{\text{pivot}}M^{-1} = P_{\text{pivot}}$.
+**Traditional Challenges:**
+```python
+def enforce_rcm_traditional(q_desired, rcm_point):
+    """Enforce remote center of motion constraint."""
+    # Complex constraint equations
+    # Multiple coordinate frame conversions
+    # Numerical drift over time
+    # Special cases for different configurations
+```
 
-2. **Tool Orientation Constraints**: The tool axis must avoid certain orientations. These become algebraic constraints on the motor's bivector components.
+**Motor-Based Solution:**
+```python
+def enforce_rcm_motors(M_desired, P_rcm):
+    """RCM constraint naturally expressed with motors."""
+    # Constraint: pivot point remains fixed
+    # M @ P_rcm @ inverse(M) = P_rcm
 
-3. **Haptic Feedback**: Forces at the tool tip transform to joint torques through the transpose Jacobian—but in CGA, this is simply the dual operation on bivectors.
+    # Decompose desired motor
+    B_screw = motor_logarithm(M_desired)
 
-The unified framework eliminates coordinate conversions, reduces numerical error, and provides intuitive geometric constraints for safety-critical applications.
+    # Project onto constraint manifold
+    # (Screw axes through P_rcm)
+    B_constrained = project_to_rcm_screws(B_screw, P_rcm)
+
+    # Reconstruct valid motor
+    M_constrained = motor_exponential(B_constrained)
+
+    return M_constrained
+```
+
+**Why GA Excels Here:**
+- RCM constraint naturally expressed as motor invariance
+- Screw motion interpolation maintains constraint
+- Numerical stability through geometric projection
+- Unified handling of position/orientation limits
+
+This example shows where GA's benefits justify the investment: high-precision applications with complex geometric constraints where traditional methods struggle with numerical stability or require extensive special-case handling.
+
+#### When to Use Motor-Based Robotics
+
+Based on practical experience, here's guidance on when motors and geometric algebra offer clear advantages:
+
+**Use GA/Motors When:**
+
+1. **Research and Algorithm Development**
+   - Exploring new kinematic structures
+   - Developing novel control algorithms
+   - Investigating singularity-free representations
+   - Studying theoretical properties of rigid motion
+
+2. **Complex Spatial Reasoning**
+   - Multi-robot coordination with relative constraints
+   - Mechanisms with coupled motions
+   - Systems with non-standard joint types
+   - Contact-rich manipulation tasks
+
+3. **Numerical Stability Critical**
+   - Long kinematic chains (7+ DOF)
+   - High-precision applications (surgery, metrology)
+   - Extended operation without recalibration
+   - Systems sensitive to accumulated error
+
+4. **Educational and Conceptual**
+   - Teaching advanced robotics concepts
+   - Providing geometric insight
+   - Unifying different transformation representations
+   - Building intuition about screw theory
+
+**Consider Traditional Methods When:**
+
+1. **Production Systems**
+   - Well-tested industrial robots
+   - Standard 6-DOF manipulators
+   - Existing codebase and toolchain
+   - Performance-critical applications
+
+2. **Simple Kinematics**
+   - Planar robots (2D sufficient)
+   - Cartesian/SCARA configurations
+   - Pure rotation or translation tasks
+   - Well-conditioned workspaces
+
+3. **Team and Infrastructure**
+   - Engineers familiar with DH parameters
+   - Existing simulation/CAD tools
+   - Limited time for training
+   - Integration with traditional controllers
+
+4. **Computational Constraints**
+   - Embedded systems with limited memory
+   - Hard real-time requirements
+   - Battery-powered devices
+   - Legacy hardware interfaces
 
 #### Real-Time Performance Considerations
 
-Robotics demands hard real-time performance. GA operations must complete within strict time bounds:
+Meeting real-time constraints requires careful implementation regardless of representation:
 
+```python
+class RealTimeMotorController:
+    """Motor-based control with timing guarantees."""
+
+    def __init__(self, robot_params, control_rate=1000):
+        self.params = robot_params
+        self.control_period = 1.0 / control_rate
+
+        # Pre-allocate all working memory
+        self.motor_buffer = allocate_motor_array(robot_params.n_joints)
+        self.bivector_buffer = allocate_bivector_array(robot_params.n_joints)
+
+        # Precompute constant geometry
+        self.joint_axes = precompute_joint_axes(robot_params)
+
+    def control_loop(self):
+        """1kHz control loop with guaranteed timing."""
+        next_deadline = current_time()
+
+        while True:
+            # Wait for next control period
+            next_deadline += self.control_period
+            sleep_until(next_deadline)
+
+            # Read sensors (10 μs)
+            joint_positions = read_encoders_fast()
+
+            # Forward kinematics (20 μs with caching)
+            current_motor = self.cached_forward_kinematics(joint_positions)
+
+            # Control computation (50 μs)
+            control_bivector = self.compute_control(current_motor)
+
+            # Convert to joint torques (30 μs)
+            joint_torques = self.project_to_joints(control_bivector)
+
+            # Command motors (10 μs)
+            write_motor_commands(joint_torques)
+
+            # Total: 120 μs << 1000 μs budget
 ```
-Timing Hierarchy for 1kHz Control Loop:
 
-Level 1 (1000 Hz): Joint servo control
-- Read encoders: 10 μs
-- Update motor positions: 20 μs
-- Safety checks: 10 μs
-- Command motors: 10 μs
-- Budget: 1000 μs total
+**Performance Comparison Table:**
 
-Level 2 (100 Hz): Trajectory tracking
-- Forward kinematics: 50 μs
-- Jacobian computation: 100 μs
-- Error computation: 30 μs
-- Inverse kinematics step: 200 μs
-- Budget: 10000 μs total
+| Operation | Traditional Time | Motor Time | Notes |
+|-----------|-----------------|------------|-------|
+| Forward Kinematics | 15 μs | 20 μs | With caching |
+| Jacobian | 25 μs | 35 μs | Bivector computation |
+| IK iteration | 100 μs | 150 μs | Per iteration |
+| Dynamics | 200 μs | 300 μs | Full computation |
+| Interpolation | 5 μs | 8 μs | Single step |
 
-Level 3 (10 Hz): Path planning
-- Collision checking: 5 ms
-- Path optimization: 20 ms
-- Motor interpolation: 5 ms
-- Budget: 100 ms total
-```
-
-GA's unified operations help meet these constraints by eliminating conversion overhead and enabling efficient parallel computation.
+Motors are typically 1.5-2× slower for individual operations but can provide system-level benefits through reduced special-case handling and better numerical stability.
 
 #### Future Directions in Robotic Geometric Algebra
 
-The marriage of CGA and robotics opens new research directions:
+The marriage of CGA and robotics opens several research directions:
 
 1. **Soft Robotics**: Extending motors to handle continuous deformations
-2. **Swarm Coordination**: Using GA for multi-robot geometric consensus
-3. **Learning**: Neural networks that operate directly on motor manifolds
-4. **Human-Robot Interaction**: Natural motion primitives for intuitive control
+   - Infinite-dimensional motor manifolds
+   - Elastic screw theory
+   - Contact geometry preservation
 
-The journey from traditional robotics mathematics to geometric algebra parallels our broader theme: apparent complexity often masks underlying simplicity. By finding the right mathematical framework—one that matches the geometric nature of the problem—we transform difficult computations into natural operations.
+2. **Swarm Coordination**: Using GA for multi-robot systems
+   - Relative configuration spaces
+   - Distributed consensus on SE(3)
+   - Geometric formation control
+
+3. **Learning in Motor Space**: Neural networks on the motor manifold
+   - Equivariant architectures
+   - Geometric policy learning
+   - Natural action spaces
+
+4. **Human-Robot Interaction**: Natural motion primitives
+   - Motor-based gesture recognition
+   - Intuitive teleoperation
+   - Biomechanical modeling
 
 #### Exercises
 
 **Conceptual Questions**
 
-1. **Why Screw Motions?** Explain why every rigid body motion can be represented as a screw motion. What makes this representation more fundamental than separate rotation and translation?
+1. **Why Screw Motions?** Explain why every rigid body motion can be represented as a screw motion. What makes this representation more fundamental than separate rotation and translation? What are the practical advantages and disadvantages of using this unified representation in robotics?
 
-2. **The Power of Bivectors**: The Jacobian columns in CGA are bivectors rather than 6-vectors. What geometric information does a bivector encode that a traditional 6-vector (3 for linear velocity, 3 for angular) obscures?
+2. **The Power of Bivectors**: The Jacobian columns in CGA are bivectors rather than 6-vectors. What geometric information does a bivector encode that a traditional 6-vector (3 for linear velocity, 3 for angular) obscures? When might the traditional separation be more practical?
 
-3. **Singularity Insight**: Compare the geometric meaning of $\det(J) = 0$ in traditional robotics versus $\mathcal{J}_1 \wedge \mathcal{J}_2 \wedge \cdots \wedge \mathcal{J}_n = 0$ in CGA. Why does the latter provide more actionable information for singularity avoidance?
+3. **Singularity Insight**: Compare the geometric meaning of $\det(J) = 0$ in traditional robotics versus $\mathcal{J}_1 \wedge \mathcal{J}_2 \wedge \cdots \wedge \mathcal{J}_n = 0$ in CGA. Why does the latter provide more actionable information for singularity avoidance? What is the computational cost of this additional insight?
 
 **Mathematical Derivations**
 
-1. **Motor Composition**: Given two motors $M_1 = \exp(-\frac{\theta_1}{2}B_1)$ and $M_2 = \exp(-\frac{\theta_2}{2}B_2)$ where $B_1$ and $B_2$ are bivectors representing screw axes, derive the conditions under which $M_1M_2 = M_2M_1$.
+1. **Motor Composition**: Given two motors $M_1 = \exp(-\frac{\theta_1}{2}B_1)$ and $M_2 = \exp(-\frac{\theta_2}{2}B_2)$ where $B_1$ and $B_2$ are bivectors representing screw axes, derive the conditions under which $M_1M_2 = M_2M_1$. What does this tell us about when operations can be reordered?
 
-2. **Jacobian Transformation**: Starting from the traditional 6×n Jacobian matrix $J_{\text{trad}}$, show how to construct the geometric Jacobian as a set of n bivectors $\{\mathcal{J}_1, \ldots, \mathcal{J}_n\}$. What information is preserved, and what is revealed?
+2. **Jacobian Transformation**: Starting from the traditional 6×n Jacobian matrix $J_{\text{trad}}$, show how to construct the geometric Jacobian as a set of n bivectors $\{\mathcal{J}_1, \ldots, \mathcal{J}_n\}$. What information is preserved, and what is revealed? What is the computational cost of this transformation?
 
-3. **Error Motor Properties**: Prove that the error motor $M_{\text{error}} = M_{\text{desired}}M_{\text{current}}^{-1}$ represents the minimal screw motion needed to move from the current pose to the desired pose.
+3. **Error Motor Properties**: Prove that the error motor $M_{\text{error}} = M_{\text{desired}}M_{\text{current}}^{-1}$ represents the minimal screw motion needed to move from the current pose to the desired pose. How does this compare to traditional position and orientation error representations?
 
-4. **Momentum Bivector**: Show that the momentum bivector $\mathcal{P} = m(\mathbf{v} \wedge \mathbf{n}_0) + \mathbf{L}$ transforms correctly under rigid body motions: $\mathcal{P}' = M\mathcal{P}M^{-1}$.
+4. **Momentum Bivector**: Show that the momentum bivector $\mathcal{P} = m(\mathbf{v} \wedge \mathbf{n}_0) + \mathbf{L}$ transforms correctly under rigid body motions: $\mathcal{P}' = M\mathcal{P}M^{-1}$. What advantages does this unified representation offer over separate linear and angular momentum?
 
 **Computational Exercises**
 
 1. **SCARA Forward Kinematics**: Given a SCARA robot with link lengths $l_1 = 0.5$m, $l_2 = 0.3$m, and joint angles $q_1 = 30°$, $q_2 = 45°$, $q_3 = 0.1$m, $q_4 = 60°$:
-   - Construct the individual joint motors
-   - Compute the total motor $M_{\text{total}}$
-   - Find the end-effector position and orientation
+   - Implement both DH and motor approaches
+   - Compare computational time and memory usage
+   - Verify both give identical end-effector poses
+   - Analyze numerical accuracy after 1000 random configurations
 
-2. **Singularity Detection**: For a 3R planar robot with equal link lengths, compute the wedge product of Jacobian bivectors at the configuration where all joints are at 0°. Verify that this correctly identifies the singularity.
+2. **Singularity Detection Comparison**: For a 3R planar robot with equal link lengths:
+   - Implement traditional determinant-based detection
+   - Implement bivector wedge product detection
+   - Compare detection sensitivity near singularities
+   - Plot computation time vs. distance from singularity
 
-3. **Path Interpolation**: Given start motor $M_1$ corresponding to position $(0,0,0)$ with identity orientation, and goal motor $M_2$ corresponding to position $(1,1,0)$ with 90° rotation about z-axis:
-   - Compute the logarithm of $M_1^{-1}M_2$
-   - Generate intermediate motors at $t = 0.25, 0.5, 0.75$
-   - Verify that the path is a constant-pitch helix
+3. **Path Interpolation Study**: Given start motor $M_1$ (position $(0,0,0)$, identity orientation) and goal motor $M_2$ (position $(1,1,0)$, 90° rotation about z):
+   - Implement both joint space and motor space interpolation
+   - Compare Cartesian path smoothness
+   - Measure computational cost per interpolation step
+   - Analyze behavior near kinematic singularities
 
-4. **Inverse Kinematics Step**: For a 2R planar robot, given a desired end-effector position and current joint angles:
-   - Compute the error motor
-   - Extract the error bivector via logarithm
-   - Use the geometric Jacobian to compute joint velocity updates
+4. **Inverse Kinematics Comparison**: For a 2R planar robot:
+   - Implement traditional Jacobian-based IK
+   - Implement motor-based IK
+   - Compare convergence rates for 100 random targets
+   - Analyze behavior for targets near workspace boundary
+   - Profile computational cost breakdown
 
 **Implementation Challenges**
 
-1. **Real-Time Motor-Based Controller**
-   Design and implement a complete robot controller using motor representations throughout.
-   - Input: 6-DOF robot model with joint limits and desired trajectory
-   - Output: Joint commands at 1 kHz update rate
+1. **Hybrid Motor-Traditional Controller**
+   Design a robot controller that intelligently switches between motor and traditional representations.
+   - Input: 6-DOF robot model, trajectory requirements
+   - Output: Joint commands at 1 kHz
    - Requirements:
-     - Use motors for all kinematic calculations
-     - Implement both position and velocity control modes
-     - Include singularity detection and avoidance
-     - Maintain numerical stability over extended operation
-     - Profile performance to verify real-time constraints
+     - Use motors for trajectory planning and interpolation
+     - Convert to traditional format for low-level control
+     - Benchmark against pure traditional and pure motor implementations
+     - Provide clear switching criteria based on task requirements
+     - Include debugging modes showing representation conversions
 
-2. **Geometric Calibration System**
-   Create a calibration system that identifies kinematic parameters using geometric algebra.
-   - Input: Measured end-effector poses and corresponding joint angles
-   - Output: Corrected motor parameters for each joint
+2. **Numerical Stability Analysis System**
+   Create a framework to compare numerical stability of motor vs. traditional kinematics.
+   - Input: Robot kinematic parameters, test trajectories
+   - Output: Drift analysis and error accumulation report
    - Requirements:
-     - Formulate calibration as optimization on motor manifold
-     - Handle both revolute and prismatic joints
-     - Account for measurement uncertainty
-     - Compare accuracy with traditional DH parameter calibration
-     - Provide visualization of geometric errors
+     - Implement identical algorithms in both representations
+     - Track numerical error accumulation over long trajectories
+     - Identify configurations where each approach excels
+     - Provide recommendations based on robot type and task
+     - Generate visualizations of error propagation
 
-3. **Multi-Robot Coordination Framework**
-   Develop a system for coordinating multiple robots using shared geometric representations.
-   - Input: Task specification and multiple robot configurations
-   - Output: Coordinated motion plans avoiding collisions
+3. **Educational Motor Robotics Toolkit**
+   Develop an interactive system for teaching robotic kinematics using motors.
+   - Input: Robot configuration, user interactions
+   - Output: Visualizations and comparative analysis
    - Requirements:
-     - Represent relative configurations as motors
-     - Use GA operations for collision detection
-     - Implement distributed consensus on geometric quantities
-     - Handle dynamic reconfiguration of robot teams
-     - Demonstrate on assembly or manipulation tasks
+     - Show screw motion decomposition for any movement
+     - Compare motor and DH representations side-by-side
+     - Interactive singularity exploration
+     - Performance benchmarking tools
+     - Export both motor and traditional code for student robots
 
 ---
 
