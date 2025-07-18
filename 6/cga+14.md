@@ -291,4 +291,4 @@ As we continue developing and applying geometric algebra, we should maintain bot
 
 ---
 
-*The shape of one—the geometric product—has revealed patterns and connections across mathematics and physics. Whether these patterns reflect deep truth or useful organization remains an open and fascinating question.*
+*The shape of computation follows the shape of space. Whether these patterns reflect deep truth or useful organization remains an open and fascinating question.*
