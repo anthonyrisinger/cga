@@ -268,31 +268,60 @@ The GA formulation opens new perspectives on cosmological questions:
 Beyond theoretical elegance, CGA enables efficient computational physics:
 
 **Electromagnetic Simulation**:
-```
-Algorithm: CGA Maxwell Evolution
-Input: Initial field F₀, current J, grid spacing Δx, time step Δt
-Output: Field evolution F(t)
+```python
+def maxwell_evolution_cga(field_F, current_J, dx, dt):
+    """Evolve electromagnetic field using unified GA formulation.
 
-1. Discretize field on spatial grid: F[i,j,k]
-2. For each time step:
-   a. Compute vector derivative:
-      (∇F)[i,j,k] = Σᵢ eⁱ(F[i+1,j,k] - F[i-1,j,k])/(2Δx)
-   b. Update field:
-      F[i,j,k] += Δt × (J[i,j,k]/ε₀ - ∇F[i,j,k])
-   c. Apply boundary conditions
-3. Extract E and B: E = ⟨F⟩₁, B = -I⟨F⟩₂
+    More conceptually clear but computationally similar to traditional.
+    """
+    # Compute vector derivative of field bivector
+    grad_F = compute_vector_derivative(field_F, dx)
+
+    # Update field according to Maxwell equation
+    field_F_new = field_F + dt * (current_J / epsilon_0 - grad_F)
+
+    # Extract E and B for traditional interface if needed
+    E_field = extract_grade_1(field_F_new)
+    B_field = -extract_grade_2_dual(field_F_new)
+
+    return field_F_new, E_field, B_field
+
+def lorentz_transform_field(field_F, velocity_v):
+    """Transform electromagnetic field under boost.
+
+    Single operation replaces matrix multiplication.
+    """
+    # Construct boost rotor
+    gamma = 1 / sqrt(1 - dot(velocity_v, velocity_v) / c**2)
+    boost_direction = normalize(velocity_v)
+    boost_rotor = exp(-atanh(norm(velocity_v) / c) * boost_direction * gamma_0 / 2)
+
+    # Apply sandwich product
+    field_F_transformed = boost_rotor * field_F * reverse(boost_rotor)
+
+    return field_F_transformed
 ```
 
 **Spinor Evolution**:
-```
-Algorithm: Geometric Quantum Evolution
-Input: Initial spinor ψ₀, Hamiltonian H, time step Δt
-Output: Evolved spinor ψ(t)
+```python
+def evolve_spinor(psi, hamiltonian_H, dt):
+    """Quantum evolution using geometric algebra.
 
-1. Express H as even multivector (scalars + bivectors)
-2. Compute evolution operator: U = exp(-iHΔt/ℏ)
-3. Evolve spinor: ψ(t+Δt) = Uψ(t)
-4. Normalize to maintain probability
+    Complex phases become geometric rotations.
+    """
+    # Express Hamiltonian as even multivector
+    H_geometric = convert_matrix_to_multivector(hamiltonian_H)
+
+    # Evolution operator as rotor
+    U = exp(-1j * H_geometric * dt / hbar)
+
+    # Apply evolution
+    psi_evolved = U * psi
+
+    # Normalize if needed
+    psi_evolved = psi_evolved / sqrt(scalar_product(psi_evolved, reverse(psi_evolved)))
+
+    return psi_evolved
 ```
 
 #### Philosophical Implications
