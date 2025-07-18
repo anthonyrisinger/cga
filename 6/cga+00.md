@@ -1,4 +1,4 @@
-# The Shape of One
+# The Shape of One is Two
 
 **Geometric Algebra: A Unified Framework for Computation and Physics**
 
@@ -10,7 +10,7 @@ In every field that touches geometry—from computer graphics to quantum mechani
 
 What if these seemingly disparate tools were actually fragments of a single, coherent mathematical structure? What if the confusion arising from converting between representations, the special cases that plague our algorithms, and the conceptual gaps between geometry and algebra were all symptoms of using broken pieces instead of the unified whole?
 
-This book presents that whole: geometric algebra, a mathematical framework that reveals the common structure underlying our geometric computations. Here, the complex numbers that describe rotations in the plane, the quaternions that handle three-dimensional orientations, and the Pauli matrices of quantum mechanics all emerge as natural aspects of a single algebraic system. The title—*The Shape of One*—captures this central insight: from one geometric product, one unified framework emerges that encompasses all our traditional tools while transcending their individual limitations.
+This book presents that whole: geometric algebra, a mathematical framework that reveals the common structure underlying our geometric computations. Here, the complex numbers that describe rotations in the plane, the quaternions that handle three-dimensional orientations, and the Pauli matrices of quantum mechanics all emerge as natural aspects of a single algebraic system. The title—*The Shape of One is Two*—captures this central insight: from one geometric product, one unified framework emerges that encompasses all our traditional tools while transcending their individual limitations.
 
 But geometric algebra offers more than theoretical elegance. It transforms how we compute. When rotations, reflections, and translations become variants of a single operation—the sandwich product—our code simplifies. When lines, planes, and spheres share the same representation space, intersection algorithms unify. When the mathematics of space naturally encodes the physics within it, our simulations become more intuitive and robust.
 

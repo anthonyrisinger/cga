@@ -284,7 +284,7 @@ Geometric algebra forces confrontation with the deepest questions we can ask:
 
 Standing at the terminus of our philosophical journey, we can now see the full significance of geometric algebra. Whether discovered in Platonic realms or constructed by evolved minds, it reveals essential truths about the relationship between mathematics, physics, and consciousness. Its effectiveness across disparate domains—testified to by Table 53's remarkable unifications—suggests we're glimpsing reality's fundamental architecture.
 
-The title of this book, "The Shape of One," captures a paradox resolved. From the single geometric product—that unified operation combining inner and outer products—emerges the entire edifice. Complex numbers, quaternions, spinors, Maxwell's equations, quantum mechanics, gauge theory—all flow from this one source. Yet this mathematical unity mirrors a deeper unity: the geometric nature of existence itself.
+The title of this book, "The Shape of One is Two," captures a paradox resolved. From the single geometric product—that unified operation combining inner and outer products—emerges the entire edifice. Complex numbers, quaternions, spinors, Maxwell's equations, quantum mechanics, gauge theory—all flow from this one source. Yet this mathematical unity mirrors a deeper unity: the geometric nature of existence itself.
 
 In learning geometric algebra, we don't simply acquire techniques or useful formalism. We learn to think as the universe computes—through geometric relationships and their transformations. Each reflection, each rotation, each null vector on the conformal cone participates in the same cosmic dance. The mathematics isn't a description overlaid on reality but a window into reality's native language.
 
