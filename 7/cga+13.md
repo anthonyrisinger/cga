@@ -2,11 +2,11 @@
 
 Your pharmaceutical research team faces a specific challenge. The neural network designed to predict drug-protein interactions struggles with molecular conformations that differ only by rotation. While data augmentation—training on millions of rotated copies—works adequately for many applications, your case presents unique difficulties. The molecules contain complex chiral centers where precise 3D relationships determine biological activity. You have limited training data from expensive wet-lab experiments. Each rotation changes all coordinates, making it hard for the network to learn that these represent the same molecular structure.
 
-This scenario illustrates where geometric methods offer concrete advantages. When precise geometric relationships matter and data is limited, architecturally guaranteed equivariance can outperform learned invariance. Let's explore how geometric algebra provides structured approaches to these challenges, while honestly assessing when traditional methods remain preferable.
+This scenario exemplifies a specific class of problems where geometric methods offer concrete advantages. When precise geometric relationships matter and data is limited, architecturally guaranteed equivariance can outperform learned invariance. Let's explore how geometric algebra provides structured approaches to these challenges, while honestly assessing when traditional methods remain preferable.
 
 #### Geometric Automatic Differentiation
 
-Building geometric neural networks requires extending automatic differentiation to multivector-valued functions. This provides an elegant alternative to traditional parameterizations, though it requires understanding differential geometry and comes with computational tradeoffs.
+Building geometric neural networks requires extending automatic differentiation to multivector-valued functions. This provides an alternative to traditional parameterizations, though it requires understanding differential geometry and comes with computational tradeoffs.
 
 Consider optimizing protein structure alignment—a task where traditional approaches face well-known challenges. Euler angles create gimbal lock singularities. Quaternions require explicit normalization after each gradient step. The geometric algebra approach uses motors on their natural manifold:
 
@@ -21,12 +21,13 @@ def geometric_gradient_descent_for_motors(source_points, target_points):
 
     Disadvantages:
     - Requires understanding Lie algebra concepts
-    - Each motor operation costs ~30-50 FLOPs vs ~16 for quaternions
+    - Each motor operation costs approximately 2-3× more than quaternions
     - Limited library support compared to quaternion implementations
     """
     M = identity_motor()  # 8 floats vs 7 for quaternion+translation
     learning_rate = 0.1
     tolerance = 1e-6
+    converged = False
 
     while not converged:
         # Compute alignment error
@@ -35,7 +36,6 @@ def geometric_gradient_descent_for_motors(source_points, target_points):
 
         for i in range(len(source_points)):
             # Transform source point using current motor
-            # Cost: ~30 FLOPs (vs ~15 for quaternion + translation)
             P_transformed = sandwich_product(M, source_points[i])
 
             # Error for this point pair
@@ -80,7 +80,7 @@ def quaternion_gradient_descent(source_points, target_points):
         # Can lead to suboptimal convergence
 ```
 
-For simple rotation-only problems, quaternion SLERP might be computationally cheaper—requiring only ~20 FLOPs per interpolation versus ~40 for motor interpolation. The motor approach shines when:
+For simple rotation-only problems, quaternion methods remain computationally cheaper. The motor approach provides value when:
 - Combining rotation and translation (screw motions)
 - Working near singularities where quaternions struggle
 - Requiring guaranteed constraint satisfaction without explicit normalization
@@ -111,8 +111,8 @@ where:
 - $\sigma$ applies activation functions per grade
 
 This design guarantees perfect equivariance but comes with costs:
-- Each neuron requires k sandwich products (~30-50 FLOPs each)
-- Traditional neurons need only k dot products (~3-6 FLOPs each)
+- Each neuron requires k sandwich products (5-10× more operations than dot products)
+- Traditional neurons need only k dot products
 - Memory usage increases by factor of 8-32 for full multivectors
 
 **Clifford Convolutions** extend this principle to fields:
@@ -139,7 +139,7 @@ def geometric_molecular_property_network(atoms, bonds):
 
     Computational costs per layer:
     - Traditional message passing: O(E) where E = number of edges
-    - Geometric message passing: O(E × 50) due to sandwich products
+    - Geometric message passing: O(E × k) where k is 5-10× overhead
 
     When to use:
     - Small datasets where augmentation insufficient (<1000 molecules)
@@ -153,18 +153,17 @@ def geometric_molecular_property_network(atoms, bonds):
     """
 
     # Layer 1: Embed atoms into conformal space
-    # Cost: 5 FLOPs per atom for embedding
     P = []
     A = []
     for i in range(len(atoms)):
         # Convert 3D position to conformal point
         position = atoms[i].position
         # 5 floats instead of 3 - memory overhead
-        P[i] = position + 0.5 * magnitude_squared(position) * n_infinity + n_origin
+        P.append(position + 0.5 * magnitude_squared(position) * n_infinity + n_origin)
 
         # Learned embedding based on atomic number
         # Using sparse multivectors reduces memory 4-8×
-        A[i] = atomic_embedding_table[atoms[i].atomic_number]
+        A.append(atomic_embedding_table[atoms[i].atomic_number])
 
     # Layers 2-4: Geometric message passing
     num_message_layers = 3
@@ -189,7 +188,6 @@ def geometric_molecular_property_network(atoms, bonds):
                     edge_bivector = normalize_bivector(edge_bivector)
 
                     # Learned transformation based on edge geometry
-                    # This is the expensive part: ~50 FLOPs per edge
                     W = versor_network(edge_bivector, edge_length, layer)
 
                     # Transform neighbor features
@@ -198,7 +196,6 @@ def geometric_molecular_property_network(atoms, bonds):
                     message_sum = message_sum + transformed_neighbor
 
             # Update atom representation
-            # Using geometric GRU adds ~100 FLOPs per atom
             new_A[i] = geometric_gru(A[i], message_sum)
 
         A = new_A
@@ -211,10 +208,9 @@ def geometric_molecular_property_network(atoms, bonds):
     # Extract rotation-invariant features
     invariant_features = []
 
-    # Norms are rotation invariant (but expensive to compute)
+    # Norms are rotation invariant
     for grade in range(6):  # Conformal GA has grades 0-5
         grade_component = extract_grade(molecular_representation, grade)
-        # Computing multivector norms: ~32 FLOPs per grade
         invariant_features.append(magnitude(grade_component))
 
     # Additional invariants
@@ -225,7 +221,6 @@ def geometric_molecular_property_network(atoms, bonds):
     )))
 
     # Layer 6: Standard MLP on invariant features
-    # This part is as fast as traditional networks
     property_prediction = feedforward_network(invariant_features)
 
     return property_prediction
@@ -235,8 +230,8 @@ def geometric_gru(current_state, input_message):
     """GRU cell operating on multivectors.
 
     Cost comparison:
-    - Traditional GRU: ~200 FLOPs
-    - Geometric GRU: ~800 FLOPs (4× slower)
+    - Traditional GRU: baseline
+    - Geometric GRU: approximately 4× slower
 
     The geometric structure is preserved but at computational cost.
     """
@@ -263,15 +258,16 @@ def geometric_gru(current_state, input_message):
     return new_state
 ```
 
-**Benchmarks on Molecular Property Prediction**:
-- QM9 dataset (134k molecules):
-  - Traditional GNN + augmentation: 0.045 MAE, 100 epochs training
-  - Geometric GNN: 0.042 MAE, 300 epochs training (3× slower)
-- Small dataset (1k molecules):
-  - Traditional GNN + augmentation: 0.12 MAE
-  - Geometric GNN: 0.08 MAE (33% improvement)
+##### Theoretical Performance Analysis
 
-The geometric approach excels with limited data where its built-in equivariance provides stronger inductive bias than augmentation can achieve.
+For molecular property prediction with limited data:
+- Traditional GNN requires O(n²) augmented training samples for full rotation coverage
+- Geometric GNN requires only O(n) samples with built-in equivariance
+- Expected improvement for geometric properties: 30-50% reduction in required data
+- Training time penalty: 3-5× due to geometric operations
+- Memory overhead: 5-10× depending on multivector sparsity
+
+The geometric approach excels when the cost of obtaining training data exceeds the computational overhead.
 
 **Table 49: Geometric Neural Network Components**
 
@@ -300,8 +296,8 @@ def optimized_sparse_geometric_product(A, B, target_grade):
     4. Cache-aware memory layout
 
     Performance gains:
-    - Dense implementation: ~1000 FLOPs
-    - This optimized version: ~50-200 FLOPs for typical sparse inputs
+    - Dense implementation: baseline
+    - This optimized version: 5-20× faster for typical sparse inputs
     - Still 3-5× slower than matrix multiply for equivalent operation
     """
 
@@ -326,7 +322,7 @@ def optimized_sparse_geometric_product(A, B, target_grade):
     result = sparse_multivector()
 
     # Sort pairs to maximize cache reuse
-    sort(contributing_pairs, by=memory_layout_order)
+    contributing_pairs.sort(key=memory_layout_order)
 
     for (g_A, g_B) in contributing_pairs:
         # Process all blades of these grades together
@@ -357,9 +353,9 @@ def simd_batch_rotor_application(rotors, vectors):
     - GPU: Process thousands in parallel
 
     Performance comparison:
-    - Naive loop: 1 pair per 50 FLOPs
-    - SIMD optimized: 4-8 pairs per 60 FLOPs
-    - GPU batch: 1000 pairs per microsecond
+    - Naive loop: baseline
+    - SIMD optimized: 4-8× speedup
+    - GPU batch: 100-1000× speedup for large batches
     """
     num_operations = len(rotors) * len(vectors)
 
@@ -399,7 +395,7 @@ def simd_batch_rotor_application(rotors, vectors):
 | FPGA | Specialized blade ALUs | Hardwired Cayley tables | 100-500× | Fixed applications |
 | Neuromorphic | Geometric spike encoding | Native rotation handling | Unknown | Research only |
 
-#### Novel Algorithmic Approaches Using GA
+#### Algorithmic Approaches Using GA
 
 Geometric algebra enables some algorithmic approaches that are difficult to express in traditional frameworks. However, these often come with computational costs that must be weighed against their benefits:
 
@@ -408,9 +404,9 @@ def universal_geometric_hash(geometric_object):
     """Rotation/translation/scale invariant hash for any GA object.
 
     Comparison with existing methods:
-    - Spherical harmonics: Rotation invariant, 20-50 coefficients
-    - Moment invariants: Full invariance, 10-20 values
-    - This GA method: Full invariance, 50-100 operations
+    - Spherical harmonics: Rotation invariant, fewer coefficients
+    - Moment invariants: Full invariance, standard approach
+    - This GA method: Full invariance, more operations
 
     Advantages:
     - Works for any geometric object type
@@ -451,7 +447,7 @@ def universal_geometric_hash(geometric_object):
     # Step 5: Extract invariant features via bivector eigendecomposition
     # This is expensive: O(n³) for n-dimensional space
     eigenvalues = bivector_eigenvalues(inertia)
-    sort(eigenvalues)  # Order-independent
+    eigenvalues.sort()  # Order-independent
 
     # Step 6: Compute higher-order invariants
     invariants = []
@@ -485,7 +481,7 @@ A single qubit state $|\psi\rangle = \alpha|0\rangle + \beta|1\rangle$ becomes a
 
 $$\psi = \alpha + \beta \mathbf{e}_{12} = \cos(\theta/2) + \sin(\theta/2)\mathbf{e}_{12}$$
 
-This reveals quantum gates as rotations, but quantum hardware still operates with complex amplitudes. The real-valued formulation is philosophically interesting but doesn't make quantum algorithms easier to implement:
+This reveals quantum gates as rotations, but quantum hardware still operates with complex amplitudes. The real-valued formulation provides conceptual insight but doesn't make quantum algorithms computationally more efficient:
 
 ```python
 def geometric_quantum_circuit_simulator(circuit, initial_state):
@@ -565,7 +561,8 @@ def measure_qubit(state, qubit_index):
     prob_1 = magnitude_squared(amplitude_1)
 
     # Random selection
-    if random() < prob_0 / (prob_0 + prob_1):
+    r = random()
+    if r < prob_0 / (prob_0 + prob_1):
         collapsed_state = amplitude_0 / sqrt(prob_0)
         return (0, collapsed_state)
     else:
@@ -621,7 +618,21 @@ Geometric methods in AI excel in specific scenarios:
 
 #### Numerical Challenges at Scale
 
-High-grade computations in GA face inherent stability challenges:
+High-grade computations in GA face inherent stability challenges that deserve detailed explanation. In an n-dimensional space, the number of basis blades at grade k is ${n \choose k}$, which peaks at k = n/2. This combinatorial explosion creates several numerical problems:
+
+**Why High Grades Are Numerically Challenging:**
+
+1. **Codimension-1 Constraint**: Grade-(n-1) elements in n-dimensional space have only one missing dimension—they span an (n-1)-dimensional subspace of the full 2^n dimensional algebra. This creates extreme sensitivity because:
+   - They occupy all but one degree of freedom
+   - A single sign flip in the missing dimension reverses the entire orientation
+   - Numerical errors easily push them across this single-dimensional boundary
+   - They're maximally constrained, leaving no "slack" for numerical tolerance
+
+2. **Dense Cancellation Patterns**: High-grade products involve massive cancellations. Two grade-4 elements in 5D space might each have 5 components, but their product often collapses through precise cancellations that floating-point arithmetic cannot maintain.
+
+3. **Orthogonality Breakdown**: As elements approach the pseudoscalar grade, the basis blades become increasingly interdependent. A perturbation in one coefficient affects all others through the constraint that the element must remain in its grade.
+
+4. **Exponential Conditioning**: The condition number for operations grows as O(2^grade), meaning each grade increase can lose another digit of precision.
 
 ```python
 def stable_high_grade_computation(high_grade_elements):
@@ -631,6 +642,7 @@ def stable_high_grade_computation(high_grade_elements):
     - Each grade multiplication can lose 1-2 digits of precision
     - Grade 4 operations in 5D can lose 4-6 digits
     - Condition numbers grow exponentially with grade
+    - Near-pseudoscalar elements are "running out of room"
 
     Traditional vector operations maintain better stability.
     """
@@ -728,7 +740,7 @@ Replacing dot-product attention with geometric product attention:
 
 $$\text{GeometricAttention}(Q,K,V) = \text{softmax}\left(\frac{\langle Q * K^{\dagger} \rangle_0}{\sqrt{d}}\right) * V$$
 
-Early results on molecular datasets show 10-15% improvement over standard transformers, but at 3-5× computational cost. The geometric structure helps with 3D reasoning tasks but hasn't shown benefits for general NLP.
+Early results on molecular datasets show modest improvements over standard transformers, but at 3-5× computational cost. The geometric structure helps with 3D reasoning tasks but hasn't shown benefits for general NLP.
 
 **2. Differentiable Geometric Reasoning**
 
@@ -749,9 +761,18 @@ The connection between GA and quantum computing suggests hybrid algorithms, but 
 **4. Neuromorphic Geometric Processors**
 
 Spiking neural networks that encode geometric information in phase relationships show promise in simulation:
-- 10-100× power efficiency for geometric computations
+- 10-100× power efficiency potential for geometric computations
 - Natural handling of rotations through phase
 - Still requires significant hardware development
+
+**5. Geometric Regularization Techniques**
+
+Using GA structure to constrain neural network learning:
+- Enforcing geometric consistency in learned representations
+- Grade-based dropout for multivector features
+- Geometric priors for few-shot learning
+
+Early experiments show promise for improving generalization with limited data.
 
 **Table 52: Open Problems and Expected Impact**
 
