@@ -1,3 +1,7 @@
+## Part I: The Unifying Foundation
+
+The journey toward computational unity begins not with grand abstractions, but with the concrete challenges every geometric system eventually faces. Through careful analysis of these challenges, we'll discover why certain patterns emerge repeatedly across different domains, and how recognizing these patterns points toward a more unified approach.
+
 ### Chapter 1: The Coordination Challenge: When Specialized Tools Must Work Together
 
 You've been debugging the collision detection system for three weeks. The requirements seemed straightforward when the project began: detect when any geometric object intersects with any other. Points, lines, planes, spheres, boxes, triangles—the basic building blocks of any physics engine or CAD system. Armed with your knowledge of linear algebra and computational geometry, you dove in confidently.
@@ -115,7 +119,7 @@ Traditional methods remain optimal for narrow, performance-critical tasks. Real-
 
 The power of geometric algebra lies not in wholesale replacement but in providing a framework that reveals connections between specialized tools. When building a robotics system that needs to compose rigid transformations, GA's motors provide a cleaner abstraction than separate rotation and translation components. When implementing a CAD kernel that must handle diverse geometric queries, the meet operation's uniformity can significantly reduce architectural complexity. When teaching geometric concepts, GA's unified framework can provide insights that would be difficult to achieve with fragmented tools.
 
-Adopting geometric algebra requires careful consideration of trade-offs. The framework typically requires more memory per geometric object (a conformal point needs up to 5 floats versus 3 for a Euclidean point, though sparse representations can reduce this overhead). Some operations that are simple in specialized frameworks may require more computation in GA. The learning curve, while rewarding, requires investment comparable to mastering any sophisticated mathematical framework.
+Adopting geometric algebra requires careful consideration of trade-offs. The framework typically requires more memory per geometric object (a conformal point needs up to 5 floats versus 3 for a Euclidean point, though sparse representations can reduce this overhead). Some operations that are simple in specialized frameworks may require more computation in GA. The learning curve, while rewarding, requires an upfront investment comparable to learning any sophisticated mathematical framework.
 
 The choice to adopt geometric algebra should be driven by system requirements rather than mathematical aesthetics. For systems where architectural simplicity, geometric insight, and unified operations provide value that outweighs the costs, GA offers compelling advantages. For systems where raw performance in narrow domains dominates all other concerns, traditional specialized methods may remain preferable. The wisdom lies in understanding these trade-offs and choosing the right tool for each situation.
 
