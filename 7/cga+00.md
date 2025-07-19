@@ -4,7 +4,7 @@
 
 ---
 
-## Preface
+## A Practitioner's Guide to Reading This Book
 
 Every geometric computation system eventually faces the same architectural challenge. You're building a robotics controller that needs quaternions for smooth orientation interpolation, matrices for coordinate transforms, and vector algebra for dynamics. Or you're developing a physics engine where collision detection uses Plücker coordinates, rigid body motion needs dual quaternions, and constraints require careful synchronization between position vectors and orientation representations. Each mathematical tool excels in its domain—quaternions elegantly handle 3D rotations without gimbal lock, matrices efficiently batch transform vertices, vector calculus naturally expresses fields and flows. Yet the coordination overhead between these representations creates genuine engineering friction.
 
@@ -49,13 +49,13 @@ Equally important, consider alternatives when:
 - **Specialized Domains**: Problems that fit entirely within one representation (pure 2D rotations with complex numbers, simple 3D transforms with matrices)
 - **Memory Constraints**: Embedded systems where the overhead of multivector storage isn't justified
 
-### Implementation Complexity: A Honest Assessment
+### An Honest Assessment on Complexity
 
 Geometric algebra doesn't make complexity disappear—it shifts it from managing representational friction to understanding geometric operations. Instead of debugging quaternion-to-matrix conversions and coordinate frame misalignments, you'll reason about grades, basis blade orientations, and multivector decompositions. The total complexity might be similar, but it's organized more coherently.
 
-The learning curve resembles mastering tensor algebra or differential forms—a significant investment that pays dividends for the right applications. Expect several weeks to become comfortable with basic operations and several months to develop deep intuition. The mathematical prerequisites include linear algebra, basic group theory helps but isn't essential, and comfort with abstract algebraic structures accelerates understanding.
+The learning curve is a **significant** investment, and one that only pays dividends for the *right* applications. Expect several weeks to become comfortable with basic operations and several months to develop deep intuition. The mathematical prerequisites include linear algebra, basic group theory helps but isn't essential, and comfort with abstract algebraic structures accelerates understanding.
 
-### A Framework, Not a Revolution
+### A Framework, Not a Panacea
 
 This book presents geometric algebra as a valuable addition to your computational toolkit. We'll build your understanding through concrete problems, derive mathematical structures from engineering requirements, and always provide honest cost-benefit analysis. You'll finish with the ability to recognize when geometric algebra offers genuine advantages and the skills to implement it effectively.
 
