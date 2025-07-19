@@ -24,7 +24,7 @@ The core pedagogical arc of this chapter—using the intuitive mirror analogy to
 
 * **The Final Motivation:** The concluding section must transition from observation to a clear engineering motivation for the next chapter. Frame it as if we have just completed a requirements-gathering phase. Summarize the desirable properties a new product would need to possess to make the elegant sandwich pattern a computational reality. The reader should feel a sense of intellectual tension and curiosity, not a sense of deficiency in their existing knowledge.
 
-Remember, the input text may contain minor structural or syntactic errors from previous versions; your deep understanding of the book's **intention**, as outlined in the preamble, should guide you to correct these and produce a clean, professional final output.
+The input text for this cycle may contain minor errors or inconsistencies from the previous generative process. Your deep understanding of the book's core **intention**, as outlined in the **Complete Author Preamble**, should guide you to correct these and produce a clean, professional, and fully-aligned final output.
 
 **REMEMBER:**
 

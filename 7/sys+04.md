@@ -22,7 +22,7 @@ The primary goal of this revision is to transform the chapter from a quasi-mysti
 
 * **Final Tone:** The chapter should conclude by framing the conformal model as one powerful, specialized tool in a larger toolkit. The goal is to empower the reader to make an informed decision about whether its architectural benefits justify its very real costs in their specific application. Avoid any language that suggests this is a mandatory "ascension" to a higher geometric plane.
 
-Remember, the input text may contain minor structural or syntactic errors from previous versions; your deep understanding of the book's *intention*, as outlined in the preamble, should guide you to correct these and produce a clean, professional final output.
+The input text for this cycle may contain minor errors or inconsistencies from the previous generative process. Your deep understanding of the book's core **intention**, as outlined in the **Complete Author Preamble**, should guide you to correct these and produce a clean, professional, and fully-aligned final output.
 
 **REMEMBER:**
 

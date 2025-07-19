@@ -26,9 +26,7 @@ This chapter introduces the "other half" of geometric computation: the relations
 
 * **Exercises and Conclusion:** Modify the "Implementation Challenges" to be more rigorous. Task the reader with building a **"Hybrid Intersection Engine"** that intelligently dispatches to either the GA `meet` or a fast traditional algorithm based on the object types and the system's performance requirements. This reinforces the chapter's ultimate, pragmatic conclusion: the mature solution is often a hybrid.
 
-Remember, the input text may contain errors. Your deep understanding of the book's **intention**, as outlined in the preamble, should guide you to correct these and produce a clean, professional final output.
-
-***
+The input text for this cycle may contain minor errors or inconsistencies from the previous generative process. Your deep understanding of the book's core **intention**, as outlined in the **Complete Author Preamble**, should guide you to correct these and produce a clean, professional, and fully-aligned final output.
 
 **REMEMBER:**
 

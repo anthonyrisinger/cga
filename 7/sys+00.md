@@ -18,7 +18,7 @@ Your primary objective is to transform any lingering evangelical advocacy from t
 
 *  **Voice and Language Polish:** Scrupulously adhere to the Author Preamble's language directives. Purge any remaining traces of hype. Replace vague claims with specific, defensible statements. For example, instead of "transforms computation," use "provides a consistent algorithm for all intersection types." Your tone must be authoritative but humble, respecting the reader's existing expertise while guiding them to a new perspective.
 
-Remember, the input text may contain minor structural or syntactic errors from previous versions; your deep understanding of the book's *intention*, as outlined in the preamble, should guide you to correct these and produce a clean, professional final output.
+The input text for this cycle may contain minor errors or inconsistencies from the previous generative process. Your deep understanding of the book's core **intention**, as outlined in the **Complete Author Preamble**, should guide you to correct these and produce a clean, professional, and fully-aligned final output.
 
 **REMEMBER:**
 

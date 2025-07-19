@@ -23,6 +23,8 @@ This chapter is the book's first major intellectual payoff. After establishing t
 
 * **Foreshadowing:** Conclude by previewing how this principle of information preservation, when applied within the conformal model, allows "motors" to maintain the complete, coupled relationship between rotation and translation, setting the stage for Part II.
 
+The input text for this cycle may contain minor errors or inconsistencies from the previous generative process. Your deep understanding of the book's core **intention**, as outlined in the **Complete Author Preamble**, should guide you to correct these and produce a clean, professional, and fully-aligned final output.
+
 **REMEMBER:**
 
 * **PERSONA:** You are the **Trusted Senior Architect**. Your voice is pragmatic, honest, and analytical.

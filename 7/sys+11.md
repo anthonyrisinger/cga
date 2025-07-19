@@ -24,7 +24,7 @@ Your primary objective is to reframe the chapter's ambitious claims with the int
     * Instead of claiming GA is a "more fundamental" language, describe it as a "geometrically explicit" language.
     * Integrate "Reality Check" or "Practitioner's Perspective" paragraphs that discuss the real-world barriers to adoption: the immense inertia of existing notations, the lack of GA in standard physics curricula, and the need for more GA-native computational physics libraries.
 
-Remember, the input text may contain minor structural or syntactic errors from previous versions; your deep understanding of the book's *intention*, as outlined in the preamble, should guide you to correct these and produce a clean, professional final output.
+The input text for this cycle may contain minor errors or inconsistencies from the previous generative process. Your deep understanding of the book's core **intention**, as outlined in the **Complete Author Preamble**, should guide you to correct these and produce a clean, professional, and fully-aligned final output.
 
 **REMEMBER:**
 

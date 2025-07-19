@@ -28,7 +28,9 @@ The existing draft of this chapter makes a series of powerful connections, but r
 
 * **Maintaining Humility in the Conclusion:** The final summary must be a model of intellectual humility. Conclude that GA is an exceptionally valuable mathematical framework that offers unique insights, but it represents *one* powerful way of understanding the universe's mathematical structure, not necessarily the definitive or only way. The final emphasis should be on GA's practical value as a tool for thought and computation, regardless of the ultimate answers to these deep philosophical questions.
 
-Remember, the input text may contain errors or inconsistencies from the previous generative process. Your deep understanding of the book's **intention**, as outlined in the **Complete Author Preamble**, is your primary guide to correct these and produce a clean, professional, and philosophically sound chapter.
+This cycle advances the book's broader intellectual structure, wresting some of its most abstract concepts, and MUST ensure deep conceptual clarity—this is the book's intellectual capstone—with the practical applications already framed correctly, this cycle can effectively explore the deeper "why" questions with the right balance of insight and intellectual humility.
+
+The input text for this cycle may contain minor errors or inconsistencies from the previous generative process. Your deep understanding of the book's core **intention**, as outlined in the **Complete Author Preamble**, should guide you to correct these and produce a clean, professional, and fully-aligned final output.
 
 **REMEMBER:**
 

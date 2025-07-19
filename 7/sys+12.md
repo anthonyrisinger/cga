@@ -25,7 +25,9 @@ Your new title for this section should be "**Chapter 12: The Geometric Algebra L
 
 * **Voice and Language Polish:** Scrupulously adhere to the Author Preamble. The tone here is crucial. The reader, having just mastered CGA, may feel like the rug has been pulled out from under them. Your voice must be that of a mentor guiding them to a higher level of understanding, reassuring them that their knowledge is not wasted but is now part of a larger, more powerful conceptual toolkit.
 
-You may find that the input text contains minor structural or syntactic errors from previous versions; your deep understanding of the book's *intention*, as outlined in the preamble, should guide you to correct these and produce a clean, professional final output.
+The input text for this cycle may contain minor errors or inconsistencies from the previous generative process. Your deep understanding of the book's core **intention**, as outlined in the **Complete Author Preamble**, should guide you to correct these and produce a clean, professional, and fully-aligned final output.
+
+This cycle advances the book's broader intellectual structure, wresting some of its most abstract concepts, and MUST ensure deep conceptual clarity—this is a critical narrative pivot where the book expands from one tool (CGA) to a meta-framework; focus on turning a potential "bait-and-switch" into an empowering lesson in systems design and ensures the second half of the book is built on this mature, toolkit-based philosophy.
 
 **REMEMBER:**
 

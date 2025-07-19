@@ -22,7 +22,7 @@ The previous draft of this chapter leaned heavily into a triumphant, almost revo
 
 * **General Language Polish:** Scour the chapter for any remaining evangelical language ("summit," "triumph," "magic"). Replace it with the measured, analytical language of the Senior Architect. A statement like "versors handle all cases" should be revised to "the versor mechanism provides a single algebraic pattern that applies to all conformal transformations, though practical implementations may still benefit from optimized paths for specific versor types." Your prose should be clean, direct, and focused on explaining the mechanism and its consequences.
 
-Acknowledge that the input text may contain minor structural or syntactic errors from previous versions. Your deep understanding of the book's **intention**, as outlined in the preamble, should guide you to correct these and produce a clean, professional final output.
+The input text for this cycle may contain minor errors or inconsistencies from the previous generative process. Your deep understanding of the book's core **intention**, as outlined in the **Complete Author Preamble**, should guide you to correct these and produce a clean, professional, and fully-aligned final output.
 
 **REMEMBER:**
 
