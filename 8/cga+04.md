@@ -55,6 +55,8 @@ The key insight comes from stereographic projection, familiar from cartography. 
 
 This angle-preserving property suggests that conformal geometry might provide the right framework for unifying transformations. But to make this work computationally, we need to determine exactly how to embed Euclidean space in a way that makes both rotations and translations multiplicative.
 
+Yet there's another fundamental limitation we must acknowledge: the conformal model, in its standard form, is inherently deterministic. A point maps to a precise location on the null cone—a single, exact 5D vector. This deterministic nature contrasts sharply with the probabilistic representations ubiquitous in modern robotics and computer vision, where state is typically encoded as probability distributions with associated uncertainty (covariance matrices, particle clouds, or belief functions). The conformal model has no native mechanism for representing "a point somewhere around here with this uncertainty ellipsoid." This absence of a probabilistic language is not a minor detail but a fundamental architectural constraint that limits the model's applicability to systems where uncertainty quantification is paramount.
+
 #### Finding the Right Embedding Space
 
 To make conformal transformations multiplicative, we need to embed Euclidean space in a higher-dimensional space with carefully chosen properties. This isn't mystical—we're looking for the minimal space where the conformal group becomes a subgroup of the orthogonal group, allowing us to use the same sandwich product mechanism that works for rotations.
@@ -173,6 +175,7 @@ Equally important is recognizing when conformal geometry isn't the right choice:
 - **Systems with severe memory constraints**: The increased storage requirements may be prohibitive for embedded systems
 - **Teams unfamiliar with GA**: The learning curve requires significant investment—weeks to become comfortable, months for deep proficiency
 - **Problems that stay purely within one transformation type**: If you only need rotations, quaternions remain more efficient
+- **Probabilistic State Estimation**: For systems where the core challenge is managing uncertainty (e.g., Kalman filters, factor graph optimization, belief-space planning), the deterministic nature of standard CGA makes it a poor primary framework. Interfacing with probabilistic libraries often requires immediately converting GA's geometric objects back into vector/matrix forms that can accommodate covariance
 
 #### Practical Implementation Considerations
 
@@ -233,10 +236,10 @@ These benefits come at the cost of:
 - Computational overhead for individual operations
 - Conceptual complexity requiring significant learning investment
 
-The next chapter will detail the conformal embedding concretely, showing exactly how Euclidean objects map to null vectors and how to implement the fundamental operations. We'll provide practical algorithms for converting between representations and demonstrate how the theoretical unification translates to working code.
+The next chapter will detail the conformal embedding concretely, showing exactly how Euclidean objects map to null vectors and how to implement the fundamental operations. We'll provide practical algorithms for converting between representations and demonstrate how the theoretical unification translates to working code. While this deterministic model provides powerful architectural benefits, its integration with the probabilistic methods required by many modern systems remains an open and critical challenge for the practitioner.
 
 Remember: conformal geometry is a powerful option in your computational toolkit, not a universal solution. Choose it when its strengths align with your system's requirements, not because it promises mathematical elegance. The best geometry for your application is the one that solves your specific problems efficiently.
 
 ---
 
-*Understanding the conformal embedding concretely requires seeing how familiar objects become citizens of this extended space.*
+*Next, we'll discover how every Euclidean transformation—rotation, translation, scaling, and more—becomes a simple sandwich product with a versor.*
