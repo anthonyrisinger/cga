@@ -361,13 +361,15 @@ def inverse_kinematics_motors(M_desired, q_init, joint_data):
 
 **Key Advantages of Motor Approach:**
 - Unified error representation (no separate position/orientation)
-- Better conditioning near singularities
+- Superior geometric insight into singularity structure
 - Natural handling of screw motion constraints
 
 **Key Disadvantages:**
 - Requires motor logarithm (computationally expensive ~200 FLOPs)
 - More complex implementation
 - Less familiar to practitioners
+
+While the geometric formulation is more elegant and avoids representation singularities like gimbal lock, the numerical conditioning of the underlying iterative least-squares problem is often comparable to well-formulated traditional methods. The primary advantage lies not in superior conditioning but in the clearer geometric understanding of the singularity's nature, as we'll see in the next section.
 
 #### Singularity Analysis and Detection
 
@@ -489,7 +491,7 @@ The geometric approach not only detects singularities but classifies them based 
 | Dynamic Singularity | Inertia matrix singular | Cannot accelerate | Motor decomposition reveals | Trajectory timing adjustment |
 | Force Singularity | Cannot resist certain wrenches | Static instability | Dual of velocity Jacobian rank | Compliance control |
 
-#### Path Planning in Motor Space
+#### Path Planning and Trajectory Optimization
 
 Path planning benefits from motors' natural interpolation properties, though computational costs must be considered.
 
@@ -537,6 +539,31 @@ def plan_motor_trajectory(M_start, M_goal, constraints):
 | Minimum Jerk | Optimize $\int\|\dddot{M}\|^2 dt$ | C³ | Very high | Human-like motion |
 | Geodesic | True Riemannian geodesic | Globally shortest | High | Energy-optimal paths |
 | Polynomial | $M(t) = \prod_i \exp(p_i(t)B_i)$ | Arbitrary constraints | Variable | Task-space planning |
+
+##### The Trajectory Optimization Gap
+
+While motor interpolation provides smooth screw-motion paths, modern robotics increasingly relies on trajectory optimization—finding paths that minimize cost functions subject to complex constraints. State-of-the-art methods like direct collocation and shooting methods achieve remarkable performance by exploiting the explicit sparsity patterns of their optimization problems.
+
+Consider a typical trajectory optimization problem:
+```python
+def trajectory_optimization_traditional():
+    """Direct collocation with sparse structure."""
+    # Decision variables: joint positions, velocities, accelerations, torques
+    # Constraints: dynamics, joint limits, collision avoidance
+    # Cost: energy, time, smoothness
+
+    # KKT system has block-diagonal sparsity
+    # Modern solvers (IPOPT, SNOPT) exploit this heavily
+    # Convergence in seconds for 1000+ variable problems
+```
+
+The GA framework, with its dense multivector operations, currently lacks mature solvers for these large-scale, constraint-dense problems. The fundamental issue is that motor operations produce dense matrices where traditional formulations naturally yield sparse ones. This sparsity gap represents a significant limitation:
+
+- **Direct Collocation**: Relies on block-diagonal Jacobian structure from time discretization
+- **Shooting Methods**: Exploit temporal causality for efficient gradient computation
+- **Interior Point Methods**: Require sparse linear algebra for tractable computation
+
+Until specialized optimization algorithms are developed that can exploit the geometric structure of motor-based formulations while maintaining computational efficiency, traditional methods will dominate practical trajectory optimization. This is not a fundamental limitation of the mathematics but reflects the current state of numerical optimization infrastructure.
 
 #### Dynamics Extension
 
@@ -614,6 +641,60 @@ The momentum bivector $\mathcal{P} = m(\mathbf{v} \wedge \mathbf{n}_0) + \mathbf
 - Most dynamics engines optimize for traditional representations
 - Performance benefits unclear without careful optimization
 - Conceptual clarity may not justify implementation effort
+
+#### Limitations in Probabilistic Robotics
+
+The deterministic elegance of motors meets a fundamental boundary when confronting real-world uncertainty. Modern robotics has evolved sophisticated probabilistic frameworks to handle sensor noise, model uncertainty, and stochastic dynamics—areas where the motor algebra, as presented, offers no computational advantage.
+
+Consider the fundamental problem of robot localization with noisy sensors. Traditional approaches represent the robot's pose belief as a probability distribution—typically a Gaussian in pose space for computational tractability. The Kalman filter and its variants (EKF, UKF) provide efficient recursive updates:
+
+```python
+def ekf_localization_traditional(mu, Sigma, control, measurement):
+    """Extended Kalman Filter for pose estimation."""
+    # mu: mean pose (x, y, theta)
+    # Sigma: 3x3 covariance matrix
+
+    # Prediction step
+    mu_pred = motion_model(mu, control)
+    F = motion_jacobian(mu, control)
+    Sigma_pred = F @ Sigma @ F.T + Q  # Q: process noise
+
+    # Update step
+    z_pred = measurement_model(mu_pred)
+    H = measurement_jacobian(mu_pred)
+    K = Sigma_pred @ H.T @ inv(H @ Sigma_pred @ H.T + R)
+    mu = mu_pred + K @ (measurement - z_pred)
+    Sigma = (I - K @ H) @ Sigma_pred
+
+    return mu, Sigma
+```
+
+The absence of a mature probabilistic framework for GA currently precludes direct application in belief-space planning, stochastic optimal control, and other uncertainty-aware optimization techniques that are central to modern robotics in unstructured environments.
+
+**Belief-Space Planning** extends path planning from deterministic states to probability distributions over states. A robot must plan paths that not only reach the goal but also gather information to reduce uncertainty:
+
+```python
+def belief_space_planner_traditional(initial_belief, goal_region):
+    """Plan in belief space considering uncertainty."""
+    # Optimize over control policies, not just paths
+    # Cost includes both state cost and uncertainty cost
+    # Requires propagating belief dynamics
+
+    # No GA equivalent exists
+```
+
+This gap is fundamental. Modern robotics problems require:
+- **State Estimation**: Fusing noisy measurements (GA lacks probabilistic updates)
+- **Motion Planning Under Uncertainty**: Considering stochastic dynamics
+- **Active Perception**: Planning to reduce uncertainty
+- **Robust Control**: Handling model uncertainty and disturbances
+
+While one could imagine extending motors to "uncertain motors" with associated covariance, no such framework has reached practical maturity. Until probabilistic extensions are developed, GA remains limited to applications where:
+- Uncertainty is negligible or handled separately
+- Deterministic models suffice
+- Probabilistic reasoning can be layered on top of GA computations
+
+This limitation significantly constrains GA's applicability in autonomous systems operating in real-world environments where uncertainty is pervasive. The geometric clarity that makes motors so appealing for deterministic kinematics becomes a liability when probability distributions over geometric objects are required.
 
 #### Real-Time Performance Considerations
 
@@ -712,6 +793,11 @@ Based on practical experience and honest assessment of tradeoffs, here's guidanc
    - Pick-and-place operations
    - Point-to-point motion
    - Well-conditioned workspaces
+
+5. **Uncertainty is Central**
+   - Autonomous navigation in unknown environments
+   - Sensor fusion with noisy measurements
+   - Any application requiring belief-space planning
 
 #### Case Study: Surgical Robot Control
 
@@ -829,6 +915,7 @@ def hybrid_controller(target_pose):
 - **Tool Integration**: CAD, simulation tools use traditional representations
 - **Performance**: Optimized traditional libraries often outperform naive GA
 - **Debugging**: Less intuitive for engineers trained on matrices
+- **Probabilistic Extensions**: No mature framework for uncertainty
 
 **When These Limitations Matter Less:**
 - Research environments exploring new algorithms
@@ -844,6 +931,10 @@ The integration of motor algebra in robotics continues to evolve:
 2. **Standardization**: Common libraries and file formats
 3. **Education**: Integration into robotics curricula
 4. **Hybrid Methods**: Combining GA insights with traditional optimization
+5. **Probabilistic Extensions**: Research into "uncertain motors" and belief-space planning
+6. **Sparse Optimization**: Developing GA-aware solvers that exploit geometric structure
+
+The path forward likely involves deeper integration rather than wholesale replacement. Just as quaternions found their niche in rotation representation without replacing matrices entirely, motors may establish themselves in specific domains—surgical robotics, space robotics, novel mechanisms—where their unique advantages justify the investment in new tools and training.
 
 #### Exercises
 
