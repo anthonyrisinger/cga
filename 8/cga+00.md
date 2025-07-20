@@ -28,9 +28,9 @@ This book guides you through geometric algebra as a technology evaluation and ad
 
 **Part III** demonstrates real applications with transparent performance analysis. We'll see where geometric algebra excels: unified transformation chains in robotics, coordinate-free algorithms in computer vision, robust intersection computations in CAD. We'll also acknowledge where specialized methods remain superior: highly optimized inner loops for specific operations, memory-constrained embedded systems, or purely 2D problems where complex numbers suffice.
 
-**Part IV** explores emerging applications in quantum computing and machine learning. These frontiers show geometric algebra's potential without hyperbole—the framework provides new perspectives on entanglement and equivariant neural networks that suggest promising research directions.
+**Part IV** explores emerging applications in quantum computing, machine learning, and even more speculative domains where geometric structure provides insight. These frontiers show geometric algebra's potential without hyperbole—the framework provides new perspectives on entanglement, equivariant neural networks, and geometric approaches to optimization that suggest promising research directions. Where applications push into uncharted territory, we maintain the same rigorous analysis, acknowledging both theoretical promise and practical limitations.
 
-**Part V** provides implementation guidance for production systems. We'll discuss practical matters: efficient data structures for sparse multivectors, SIMD optimization strategies, and integration with existing codebases. We'll also honestly address current limitations in debugging tools and library ecosystems compared to mature alternatives.
+**Part V** provides implementation guidance for production systems. We'll discuss practical matters: efficient data structures for sparse multivectors, SIMD optimization strategies, and integration with existing codebases. We'll also honestly address current limitations in debugging tools and library ecosystems compared to mature alternatives, while exploring emerging solutions and best practices from practitioners who have successfully deployed GA in production.
 
 ### When to Use Geometric Algebra
 
@@ -55,11 +55,13 @@ Geometric algebra doesn't make complexity disappear—it shifts it from managing
 
 The learning curve is a **significant** investment, and one that only pays dividends for the *right* applications. Expect several weeks to become comfortable with basic operations and several months to develop deep intuition. The mathematical prerequisites include linear algebra, basic group theory helps but isn't essential, and comfort with abstract algebraic structures accelerates understanding.
 
+Furthermore, while this book explores GA's applications comprehensively—including emerging and speculative uses—it's important to acknowledge domains where the framework currently offers limited advantages. Probabilistic geometric reasoning and uncertainty quantification lack native GA representations, though researchers are exploring connections. Large-scale sparse optimization problems, fundamental to modern robotics and AI backends, typically rely on matrix formulations that don't map directly to GA's dense multivector operations. These aren't permanent limitations—active research continues to expand GA's applicability—but they represent honest boundaries where traditional methods currently excel.
+
 ### A Framework, Not a Panacea
 
 This book presents geometric algebra as a valuable addition to your computational toolkit. We'll build your understanding through concrete problems, derive mathematical structures from engineering requirements, and always provide honest cost-benefit analysis. You'll finish with the ability to recognize when geometric algebra offers genuine advantages and the skills to implement it effectively.
 
-The goal isn't to convince you to abandon existing tools but to add a powerful framework that unifies and clarifies geometric computation when architectural benefits justify the investment. Whether you're designing robotics systems, building physics engines, or exploring new approaches to geometric problems, understanding geometric algebra expands your solution space in meaningful ways.
+The goal isn't to convince you to abandon existing tools but to add a powerful framework that unifies and clarifies geometric computation when architectural benefits justify the investment. Whether you're designing robotics systems, building physics engines, exploring quantum computing interfaces, or pursuing deeper questions about the fundamental nature of space itself, understanding geometric algebra expands your solution space in meaningful ways.
 
 ---
 
@@ -94,7 +96,7 @@ This reference section comprehensively catalogs the notation used throughout the
 
 | Operation | Symbol | Definition | Grade Effect |
 |-----------|--------|------------|--------------|
-| Geometric product | $AB$ | Fundamental associative product | Mixed grades |
+| Geometric product | $AB$ | Core associative product | Mixed grades |
 | Inner product | $A \cdot B$ | Symmetric contraction | $\lvert\text{grade}(A) - \text{grade}(B)\rvert$ |
 | Outer product | $A \wedge B$ | Antisymmetric extension | $\text{grade}(A) + \text{grade}(B)$ if independent |
 | Scalar product | $\langle AB \rangle$ or $\langle AB \rangle_0$ | Scalar part of $AB$ | 0 |
