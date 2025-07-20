@@ -46,7 +46,7 @@ The antisymmetry $\mathbf{a} \wedge \mathbf{b} = -\mathbf{b} \wedge \mathbf{a}$ 
 
 Here's the crucial engineering insight: the dot and wedge products are lossy projections onto different subspaces. The dot product projects onto grade-0 (scalars), the wedge product extends to grade-2 (bivectors). These subspaces are completely independent—they share no common elements except zero.
 
-This independence suggests a profound possibility. What if we simply keep both parts?
+This independence immediately presents a solution. What if we simply keep both parts?
 
 $$\mathbf{ab} = \mathbf{a} \cdot \mathbf{b} + \mathbf{a} \wedge \mathbf{b}$$
 
