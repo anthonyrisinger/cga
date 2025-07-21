@@ -208,6 +208,20 @@ def apply_motor(motor, geometric_object):
     return transformed
 ```
 
+> **A Note on Versors and Uncertainty**
+>
+> While motors elegantly unify rigid transformations for robotics, the practitioner must recognize a fundamental limitation: versors are deterministic geometric operators. They represent a specific, known transformation, not a probability distribution over possible transformations.
+>
+> This deterministic nature means versors cannot natively encode statistical information crucial to modern robotics:
+> - No representation of uncertainty in rotation axis or angle
+> - No covariance matrix over screw motion parameters
+> - No native mechanism for belief propagation through kinematic chains
+> - No built-in support for Kalman filtering on the SE(3) manifold
+>
+> Systems requiring probabilistic state estimation must rely on external frameworks. The typical approach extracts Jacobians from the versor formulation to propagate covariance matrices in a separate, traditional state space. While versors provide architectural elegance for the deterministic components of robotic systems, stochastic aspects require complementary tools.
+>
+> This limitation doesn't diminish the value of motors for their intended purpose—representing known transformations with unified algebra. It simply delineates the boundary where additional mathematical machinery becomes necessary.
+
 #### The Non-Commutativity Feature
 
 Versor multiplication is non-commutative, correctly encoding physical reality. Consider:
@@ -228,7 +242,7 @@ Translating then rotating produces a different result than rotating then transla
 
 #### Numerical Stability and Computational Excellence
 
-The versor representation offers genuine numerical advantages, though we shouldn't overstate them. Traditional rotation matrices drift from orthogonality through floating-point error. Quaternions require constant renormalization. Versors maintain their constraints naturally to first order.
+The versor representation offers genuine numerical advantages, though we shouldn't overstate them. Traditional rotation matrices drift from orthogonality through floating-point error. Quaternions require constant renormalization. Versors maintain their constraints naturally to first order—meaning small numerical errors produce changes proportional to the error magnitude rather than catastrophic constraint violation, though accumulation still requires periodic correction.
 
 A rotor satisfies $R\tilde{R} = 1$. Small perturbations preserve this constraint better than matrix orthogonality. When drift does occur, renormalization is simple:
 
@@ -311,7 +325,11 @@ The versor mechanism provides a single algebraic pattern for all geometric trans
 
 This unification simplifies system architecture, though efficient implementation may still benefit from case-specific optimizations. The framework excels when transformation diversity and compositional complexity outweigh the overhead of working in conformal space.
 
-The versor mechanism represents a powerful unifying principle in mathematics, analogous to the exponential map connecting Lie algebras to Lie groups. It reveals that geometric transformations aren't a collection of special cases but variations on a single theme: the sandwich product. Whether this unification justifies the computational costs depends entirely on your application's needs.
+The versor mechanism represents a powerful unifying principle in mathematics, analogous to the exponential map connecting Lie algebras to Lie groups. It reveals that geometric transformations aren't a collection of special cases but variations on a single theme: the sandwich product. Versors extend our understanding of transformation beyond the traditional categories, revealing the deep unity beneath surface diversity.
+
+The practitioner should recognize that the exceptional closure of the versor mechanism—where the product of any two versors is another versor of the same group—is a special property of highly symmetric spaces like the conformal model. When developing geometric algebras for less-structured domains, this property may not hold, and careful constraint management may be required to ensure that composed transformations remain valid.
+
+Whether this unification justifies the computational costs depends entirely on your application's needs. For systems where architectural clarity and compositional robustness matter more than raw performance, versors offer an elegant solution. For performance-critical applications with simple transformation patterns, traditional methods remain optimal. Most mature systems benefit from a hybrid approach—using versors for high-level structure while retaining specialized algorithms for inner loops.
 
 #### Exercises
 
@@ -369,6 +387,13 @@ The versor mechanism represents a powerful unifying principle in mathematics, an
    - Implement automatic renormalization that preserves geometric meaning
    - Provide error metrics to guide when renormalization is necessary
    - Compare with traditional methods for maintaining orthogonal matrices
+
+4. **Uncertainty-Aware Motor System** (Research Challenge): Design a prototype system that augments motors with uncertainty information:
+   - Represent uncertain motors using external covariance matrices
+   - Implement belief propagation through motor chains
+   - Compare with traditional SE(3) uncertainty propagation
+   - Document the mathematical framework and computational costs
+   - Identify which aspects could benefit from native GA support in future algebras
 
 ---
 
