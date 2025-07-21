@@ -47,6 +47,11 @@ $$C = P_1 \wedge P_2 \wedge P_3$$
 
 Cost: One 3-way outer product. Compare this to traditional methods requiring center and radius calculation through solving linear systems.
 
+**Sphere Construction**: A sphere through points $P_1$, $P_2$, $P_3$, and $P_4$:
+$$S^* = P_1 \wedge P_2 \wedge P_3 \wedge P_4$$
+
+Note this gives the dual form—we'll see why this matters shortly.
+
 #### The Inner Product Null Space (IPNS)
 
 In IPNS, we define objects through constraints using the inner product:
@@ -62,6 +67,8 @@ Testing point membership: One inner product (5 multiplications, 4 additions).
 $$S = \mathbf{c} + \frac{1}{2}\mathbf{c}^2\mathbf{n}_\infty + \mathbf{n}_0 - \frac{1}{2}r^2\mathbf{n}_\infty$$
 
 Testing point membership: One inner product. Traditional method: compute distance to center, compare to radius—similar cost but less unified framework.
+
+The IPNS representation reveals something beautiful: all constraints have the same algebraic form. Whether testing point-on-plane, point-on-sphere, or point-on-line, it's always $X \cdot A = 0$.
 
 #### The Duality Principle: Power and Cost
 
@@ -88,7 +95,9 @@ This principle provides theoretical unity, but practical implementation requires
 | Circle | $C = P_1 \wedge P_2 \wedge P_3$ (grade 3) | $C^* = S \wedge \pi$ (grade 2) | Sphere-plane intersection | 3 → 2 | Dual rarely needed |
 | Sphere | $S^* = P_1 \wedge P_2 \wedge P_3 \wedge P_4$ (grade 4) | $S$ (grade 1) | Direct representation | 4 → 1 | IPNS natural choice |
 
-#### The Meet Operation: Elegance Meets Reality
+The grade change reveals the deep structure: objects and their duals sum to grade 5, the dimension of conformal space.
+
+#### The Meet Operation: Architectural Elegance vs. Computational Reality
 
 The meet operation ($\vee$) computes geometric intersections through an elegant formula:
 
@@ -131,6 +140,8 @@ Traditional methods remain optimal when:
 | Line | Sphere | Point pair | Entry/exit points | Near miss → small magnitude result |
 | Sphere | Sphere | Circle | Intersection circle | Nearly tangent → precision loss |
 
+The beauty lies in the uniformity: the same `meet` function handles all cases. The cost lies in the generality: each operation requires full multivector arithmetic.
+
 #### The Join Operation
 
 The join operation ($\wedge$ when objects are disjoint) constructs the smallest object containing all inputs. It's computationally simpler than meet—just an outer product without duals.
@@ -143,6 +154,8 @@ The join operation ($\wedge$ when objects are disjoint) constructs the smallest 
 | Point | Line | Plane | Plane containing both | 1 + 2 = 3 | ~50 |
 | Line | Line | Plane/4-blade | Plane (if coplanar) | 2 + 2 = 4 or less | ~80 |
 
+The join reveals the constructive nature of geometry: complex objects built from simpler constituents through the outer product.
+
 #### Detecting Degeneracies
 
 Geometric degeneracies—parallel lines, tangent spheres, coplanar points—require careful handling in any system. The algebraic framework detects them through grade and magnitude:
@@ -154,6 +167,8 @@ Geometric degeneracies—parallel lines, tangent spheres, coplanar points—requ
 | Three points | $P_1 \wedge P_2 \wedge P_3$ | Circle (grade 3) | Line (lower grade) | Check grade | $\|\text{grade-2 part}\| < \epsilon$ |
 | Two lines | $L_1 \vee L_2$ | Point | Null or line | Check magnitude | $\|\text{result}\| < \epsilon$ |
 | Two spheres | $S_1 \vee S_2$ | Circle | Point (tangent) | Grade analysis | Monitor condition number |
+
+The algebra naturally reveals degeneracies through grade reduction or magnitude collapse—no special case code required.
 
 #### Choosing Between Algebraic and Traditional Methods
 
@@ -257,11 +272,15 @@ def near_parallel(A, B):
 
 #### Numerical Stability Considerations
 
-The meet operation's three-step process can accumulate errors:
+The meet operation's three-step process can accumulate errors through specific mechanisms:
 
-1. **First dual**: Condition number depends on pseudoscalar magnitude
-2. **Wedge product**: Error amplification for nearly dependent objects
-3. **Second dual**: Further error accumulation
+**First Dual ($A \rightarrow A^*$)**: The initial dualization multiplies by the pseudoscalar inverse $I^{-1}$. If the pseudoscalar is poorly conditioned, or if the input object $A$ has components that vary widely in magnitude, this multiplication can introduce significant relative errors. The condition number of this operation depends on both the pseudoscalar's structure and the input object's numerical quality.
+
+**Wedge Product ($A^* \wedge B^*$)**: This stage presents the primary source of instability. When objects $A$ and $B$ are nearly incident (parallel planes, tangent spheres), their duals $A^*$ and $B^*$ become nearly linearly dependent. The wedge product of nearly dependent elements produces results with catastrophically small magnitude, leading to severe loss of precision through subtractive cancellation.
+
+**Second Dual ($(A^* \wedge B^*)^*$)**: The final dualization amplifies any errors accumulated in the previous stages. Small errors in the wedge product become magnified when divided by the potentially small magnitude of the intermediate result.
+
+Consider two nearly parallel planes separated by angle $\epsilon$. Their duals map to two bivectors (representing lines at infinity) that differ by approximately $\epsilon$. The wedge product produces a 4-blade with magnitude proportional to $\epsilon$, which after the second dual yields a line whose coordinates have been amplified by factor $1/\epsilon$. For $\epsilon = 10^{-6}$, coordinate values can explode by a factor of $10^6$, rendering the result numerically meaningless.
 
 **Mitigation Strategies**:
 - Pre-normalize objects to standard magnitude
@@ -270,11 +289,22 @@ The meet operation's three-step process can accumulate errors:
 - Fall back to specialized methods when appropriate
 - Use higher precision for intermediate calculations if needed
 
+#### A Deterministic Framework: The Probabilistic Boundary
+
+It is critical for the practitioner to recognize that the algebra of incidence, as presented here, is fundamentally deterministic. A point either lies on a line, or it does not. The framework in its current, standard form lacks a native language for representing probabilistic states—such as a point existing as a Gaussian distribution in space, or a plane defined with uncertainty.
+
+The elegant duality between constructive (OPNS) and constraint-based (IPNS) representations suggests a promising, though currently speculative, avenue for research: could this duality be extended to encode uncertain geometric objects, where an object is represented by a probability distribution over a manifold of blades? Answering this question and developing a computationally viable framework for such 'probabilistic primitives' remains an open and important challenge.
+
 #### The Lattice Structure: Beautiful but Expensive
 
 The meet and join operations endow geometric objects with a lattice structure. This enables elegant geometric reasoning:
 
 $$A \leq B \text{ if } A \vee B = A$$
+
+This means object $A$ is "contained in" object $B$ in the incidence sense—every point incident to $A$ is also incident to $B$. The structure provides:
+- Partial ordering of geometric objects
+- Natural hierarchy (point ≤ line ≤ plane)
+- Boolean-like operations on geometric sets
 
 While theoretically powerful for automated theorem proving, practical use requires careful attention to:
 - Numerical tolerances in equality testing
@@ -302,6 +332,23 @@ def project_point_to_line(P, L):
     # Choose based on your needs
     pass
 ```
+
+**Closest Points Between Skew Lines**:
+```python
+def closest_points_skew_lines(L1, L2):
+    """Find closest points on two skew lines."""
+    # The common perpendicular is L1 ∨ L2
+    # when interpreted as a line (grade 2)
+    common_perp = meet(L1, L2)
+
+    # Points are where common perpendicular meets each line
+    P1 = meet(common_perp, L1)
+    P2 = meet(common_perp, L2)
+
+    return P1, P2
+```
+
+This showcases GA's elegance: what requires careful vector analysis traditionally becomes a sequence of meets.
 
 #### Performance Guidelines
 
@@ -344,6 +391,18 @@ def clip_polygon_to_plane(polygon_points, clipping_plane):
 
 This implementation shows GA's strength: clean logic, no special cases. The cost is higher per operation, but the code is more maintainable and extendable.
 
+#### Reflections on Architectural Unity
+
+The algebra of incidence reveals geometric computation's dual nature. Traditional methods achieve remarkable efficiency through specialization—each algorithm perfectly tuned for its specific case. Geometric algebra achieves architectural simplicity through unification—one meet operation replacing dozens of specialized algorithms.
+
+Neither approach is universally superior. The choice depends on your system's needs:
+- If performance dominates and geometry is simple, use traditional methods
+- If architectural clarity matters and performance has headroom, consider GA
+- If robustness near degeneracies is critical, GA's uniform framework helps
+- If you're building research prototypes, GA's flexibility accelerates development
+
+Most production systems benefit from a hybrid approach: GA for high-level structure and algorithm flow, traditional methods for performance-critical inner loops. This isn't compromise—it's engineering wisdom.
+
 #### Exercises
 
 **Conceptual Questions**
@@ -361,6 +420,8 @@ This implementation shows GA's strength: clean logic, no special cases. The cost
 2. Show that for two parallel planes $\pi_1$ and $\pi_2$, their meet $\pi_1 \vee \pi_2$ produces a line at infinity. How would you detect this numerically?
 
 3. Derive the computational complexity of the meet operation for different grade combinations. When is it most expensive?
+
+4. Demonstrate that the incidence lattice satisfies: if $A \leq B$ and $B \leq C$, then $A \leq C$. What are the numerical challenges in verifying this computationally?
 
 **Computational Exercises**
 
@@ -383,6 +444,8 @@ This implementation shows GA's strength: clean logic, no special cases. The cost
    - Grade extraction
 
    How does this change with different object types?
+
+4. Create a visualization showing how the meet of two lines degrades as they approach parallel configuration. Plot condition number versus angle between lines.
 
 **Implementation Challenges**
 
@@ -415,6 +478,16 @@ This implementation shows GA's strength: clean logic, no special cases. The cost
      - Identify regimes where each approach excels
      - Provide implementation recommendations based on results
 
+4. **Probabilistic Extension Prototype**: Design a proof-of-concept for uncertain geometric objects:
+   - Input: Geometric objects with associated uncertainty
+   - Output: Probabilistic intersection results
+   - Requirements:
+     - Represent uncertain points as Gaussian distributions
+     - Extend meet operation to handle probability distributions
+     - Compare with traditional Monte Carlo approaches
+     - Document the mathematical framework developed
+     - Identify computational bottlenecks for future research
+
 ---
 
-*The algebra of incidence provides powerful tools for geometric computation. Like any engineering choice, success comes from understanding when these tools offer the best solution for your specific needs. Next, we apply these principles to the unified treatment of computer graphics and vision.*
+*The algebra of incidence provides powerful tools for geometric computation. Like any engineering choice, success comes from understanding when these tools offer the best solution for your specific needs. Next, we apply these principles to the unified treatment of computer graphics and vision, where the boundaries between synthesis and analysis dissolve under geometric algebra's unifying lens.*
