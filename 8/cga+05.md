@@ -1,6 +1,6 @@
-### Chapter 5: Citizenship on the Null Cone: The Conformal Representation
+### Chapter 5: The Conformal Representation: A Deterministic Geometric Model
 
-This chapter's goal is straightforward: we'll show how to embed 3D Euclidean objects into 5D conformal space to enable unified geometric computations. This embedding trades memory overhead—5 floats per point instead of 3—for computational uniformity. It's a worthwhile tradeoff when your system handles diverse geometric operations, though not always optimal for specialized tasks.
+This chapter's goal is straightforward: we'll show how to embed 3D Euclidean objects into 5D conformal space to enable unified geometric computations. This embedding trades memory overhead—5 floats per point instead of 3—for computational uniformity. It's a worthwhile tradeoff when your system handles diverse geometric operations, though not always optimal for specialized tasks. It is critical to note from the outset that the model presented here is deterministic; it provides a powerful language for precise geometric configurations. The significant challenge of representing probabilistic uncertainty will be addressed once this foundational model is established.
 
 The embedding we'll explore linearizes distance relationships by lifting points onto a carefully chosen surface in higher dimensions. This isn't mysticism; it's a concrete technique that transforms nonlinear distance calculations into linear inner products, enabling architectural simplifications that often justify the overhead.
 
@@ -48,6 +48,16 @@ $$P_1 \cdot P_2 = \mathbf{p}_1 \cdot \mathbf{p}_2 - \frac{1}{2}\mathbf{p}_1^2 - 
 $$P_1 \cdot P_2 = -\frac{1}{2}(\mathbf{p}_1^2 - 2\mathbf{p}_1 \cdot \mathbf{p}_2 + \mathbf{p}_2^2) = -\frac{1}{2}\|\mathbf{p}_1 - \mathbf{p}_2\|^2$$
 
 The inner product encodes the squared Euclidean distance. This transforms nonlinear distance calculations into linear operations—a significant architectural advantage. However, let's be clear: computing these inner products involves the same number of floating-point operations as traditional distance formulas. The benefit is architectural uniformity, not raw computational speed.
+
+### A Critical Limitation: The Absence of Uncertainty
+
+The embedding formula $P = \mathbf{p} + \frac{1}{2}\mathbf{p}^2\mathbf{n}_\infty + \mathbf{n}_0$ maps a single, precise Euclidean point to a single, precise null vector. This one-to-one mapping provides no native mechanism for representing a probability distribution over a point's position—such as a Gaussian covariance ellipsoid from a sensor measurement or the particle clouds used in modern robotics.
+
+Geometric algebra, in its current formulation for CGA, lacks a mathematically coherent framework for probabilistic interpretations of its geometric objects.
+
+While avenues for research exist—such as exploring perturbations of the inner product or deformations of the metric to encode covariance—these remain speculative and are not yet part of the established computational framework. Some researchers have proposed representing uncertainty through weighted sums of conformal points or by embedding covariance matrices as external metadata, but these approaches sacrifice the algebraic unity that makes GA attractive.
+
+We will revisit the practical consequences of this limitation in later chapters when we apply our tools to real-world applications like robotics and sensor fusion, where uncertainty is a central challenge. The practitioner should understand that systems requiring probabilistic state estimation will need complementary frameworks alongside the deterministic geometric algebra presented here.
 
 #### The Complete Representation Catalog
 
@@ -154,7 +164,7 @@ The embedding formula $P = \mathbf{p} + \frac{1}{2}\mathbf{p}^2\mathbf{n}_\infty
 - $\frac{1}{2}\mathbf{p}^2\mathbf{n}_\infty$: A "height" in the $\mathbf{n}_\infty$ direction proportional to squared distance from origin
 - $\mathbf{n}_0$: A unit "bias" ensuring proper normalization
 
-The intersection of this paraboloid with the null cone constraint creates a 3D surface that encodes Euclidean geometry in a linearized form.
+The intersection of this paraboloid with the null cone constraint creates a 3D surface that encodes Euclidean geometry in a linearized form. This geometric construction—lifting points onto a higher-dimensional surface to linearize relationships—appears throughout mathematics, from the Veronese embedding in algebraic geometry to kernel methods in machine learning.
 
 #### Practical Considerations
 
@@ -234,11 +244,11 @@ When implementing the conformal model, several practical issues require attentio
 
 We've successfully embedded Euclidean geometry into conformal space. Points, lines, planes, circles, and spheres all become elements of our 5D geometric algebra. Their relationships encode as inner products. The representation unifies previously distinct object types—spheres and planes share the same grade, circles and lines become indistinguishable in their algebraic structure.
 
-This unification comes with clear tradeoffs. We use more memory per object. Individual operations may require more floating-point calculations than specialized methods. The $\mathbf{p}^2$ term can cause numerical issues for distant points. These are the costs of uniformity.
+This unification comes with clear tradeoffs. We use more memory per object. Individual operations may require more floating-point calculations than specialized methods. The $\mathbf{p}^2$ term can cause numerical issues for distant points. Most critically, we've gained no native capability for representing uncertainty—every geometric object remains deterministically precise. These are the costs of uniformity.
 
 The benefits appear at the architectural level. One type system handles all geometric objects. One set of operations works universally. Complex transformation chains simplify dramatically. For applications involving diverse geometric computations—CAD systems, robotics, physics simulations—the elegance and uniformity often justify the overhead. For specialized, performance-critical applications, traditional methods may remain preferable.
 
-The next chapter will show how this investment in representation pays off when all transformations—rotations, translations, scalings, and more—become simple sandwich products with versors. The architectural simplification enabled by conformal representation becomes clear when we see the versor mechanism in action.
+The next chapter will show how this investment in representation pays off when all transformations—rotations, translations, scalings, and more—become simple sandwich products with versors. The architectural simplification enabled by conformal representation becomes clear when we see the versor mechanism in action. Though we must always remember: this beautiful unification operates only in the realm of precise, deterministic geometry.
 
 ---
 
