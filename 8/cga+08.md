@@ -106,7 +106,7 @@ One area where CGA provides genuine computational advantage is numerical conditi
 
 | Operation | Traditional Condition Number | CGA Condition Number | Operation Count Ratio | When CGA Wins |
 |-----------|----------------------------|---------------------|---------------------|---------------|
-| Parallel line meet | $O(1/\sin^2\theta)$ | $O(1/\sin\theta)$ | 5× more ops | $\theta < 10^{-4}$ |
+| Parallel plane meet | $O(1/\sin^2\theta)$ | $O(1/\sin\theta)$ | 5× more ops | $\theta < 10^{-4}$ |
 | Near-tangent spheres | $O(1/\sqrt{\epsilon})$ | $O(1)$ | 4× more ops | Always for stability |
 | Coplanar lines | Requires special detection | Natural result | 5× more ops | Degeneracies |
 | Nearly collinear points | $O(1/\text{area}^2)$ | $O(1/\text{area})$ | 3× more ops | Extreme cases |
@@ -149,7 +149,7 @@ The CGA construction offers:
 - **Disadvantages**: $O(n^2)$ direct construction vs $O(n \log n)$ for Fortune's, ~3× more operations per bisector
 - **When to use**: Research contexts, non-Euclidean extensions, or when conceptual clarity aids development
 
-For production 2D Voronoi diagrams, Fortune's algorithm remains superior.
+For production 2D Voronoi diagrams, Fortune's algorithm remains superior. Yet for weighted Voronoi diagrams, spherical Voronoi tessellations, or hyperbolic geometry applications, the CGA framework extends naturally where traditional methods require complete reformulation.
 
 ##### Delaunay Triangulation: When Insight Doesn't Equal Speed
 
@@ -225,6 +225,7 @@ Based on extensive implementation experience, here are realistic recommendations
 - Robustness near degenerate configurations is critical
 - Building research prototypes where flexibility matters
 - The reduction in code complexity justifies 3-10× performance overhead
+- Exploring non-Euclidean geometries where traditional methods don't readily extend
 
 **Use traditional methods when:**
 - Performance requirements leave no headroom for overhead
@@ -263,6 +264,20 @@ A medium-scale CAD kernel implementation provides concrete data on the tradeoffs
 
 The hybrid approach achieved near-baseline performance while dramatically reducing code complexity and bug rates. This represents the mature engineering choice—using each tool where it excels.
 
+#### Advanced Applications: Where GA's Generality Shines
+
+Beyond standard computational geometry, GA's framework enables applications difficult or impossible to express in traditional frameworks:
+
+**Non-Euclidean Geometries**: The same meet operation works in spherical, hyperbolic, and other constant-curvature spaces by adjusting the algebra's signature. Traditional algorithms require complete reformulation for each geometry.
+
+**Kinematics and Mechanism Design**: Joint constraints naturally express as geometric incidence conditions. A revolute joint constrains motion to rotation about a line; a prismatic joint to translation along a line. The meet operation directly computes feasible configurations.
+
+**Mesh Processing with Guarantees**: Operations like mesh offsetting and Minkowski sums gain robust implementations through GA's unified treatment of oriented volumes and careful degeneracy handling.
+
+**Computational Topology**: Persistent homology computations benefit from GA's natural encoding of orientation and incidence, providing cleaner implementations of filtration and boundary operations.
+
+These applications showcase where GA's overhead becomes justified—when the problem itself demands the framework's generality and robustness.
+
 #### The Pragmatic Assessment
 
 Traditional geometric algorithms are remarkably efficient for good reasons. Decades of optimization have produced specialized solutions that excel within their domains. CGA doesn't challenge this efficiency—instead, it offers a different tradeoff.
@@ -275,6 +290,7 @@ The meet operation requires 3-10× more computation than specialized intersectio
 - Cleaner system architecture
 - Dramatically reduced testing complexity
 - Better numerical conditioning for edge cases
+- Extensibility to non-Euclidean and higher-dimensional spaces
 
 For systems where development time, maintainability, and robustness matter as much as raw performance, CGA offers genuine advantages. For performance-critical applications with well-understood geometry, traditional methods remain optimal.
 
@@ -351,16 +367,15 @@ As geometric systems continue to grow in complexity, the architectural advantage
      - Achieve less than 50% overhead vs pure traditional
      - Support runtime switching based on profiling
 
-3. **Debugging Visualization System**
-   Build a system that helps developers understand CGA algorithm behavior.
-   - Input: Geometric operation trace
-   - Output: Step-by-step visualization
+3. **Non-Euclidean Extension**
+   Extend your geometric kernel to handle spherical and hyperbolic geometry.
+   - Input: Geometric primitives with specified curvature
+   - Output: Intersection results in appropriate geometry
    - Requirements:
-     - Show dual operations geometrically
-     - Visualize wedge products as swept volumes
-     - Highlight numerical conditioning issues
-     - Compare CGA and traditional algorithm steps side-by-side
-     - Export operation statistics for analysis
+     - Use signature change for different geometries
+     - Maintain unified interface across all curvatures
+     - Compare with specialized non-Euclidean algorithms
+     - Document where GA approach excels or struggles
 
 ---
 
