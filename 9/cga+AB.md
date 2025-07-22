@@ -63,8 +63,7 @@ $$d^2 = -2P_1 \cdot P_2$$
 $$d = \frac{P \cdot \pi}{-P \cdot \mathbf{n}_\infty}$$
 
 - Sign indicates which side of plane
-- For normalized points: denominator equals $-1$
-- Alternative form: $d = P \cdot \pi$ when $P$ is normalized
+- For normalized points where $P \cdot \mathbf{n}_\infty = -1$: simplifies to $d = P \cdot \pi$
 
 **Point-to-Sphere Relationship**
 
@@ -114,7 +113,7 @@ Rotor construction:
 $$R = \exp\left(-\frac{\theta}{2}B\right) = \cos\frac{\theta}{2} - \sin\frac{\theta}{2}B$$
 
 - $B$: Unit bivector defining rotation plane ($B^2 = -1$)
-- Application: $X' = RXR^{-1} = RX\tilde{R}$
+- Application: $X' = RXR^{-1} = RX\tilde{R}$ (second equality holds for unit rotors)
 - Inverse: $R^{-1} = \tilde{R}$ for unit rotors
 - Composition: $R_{total} = R_2R_1$ (apply $R_1$ first)
 
@@ -135,6 +134,8 @@ where scale factor is $s = e^\lambda$.
 Alternative forms:
 $$D = \cosh\frac{\lambda}{2} + \sinh\frac{\lambda}{2}\mathbf{n}_0\mathbf{n}_\infty$$
 $$D = \frac{1 + s}{2} + \frac{1 - s}{2}\mathbf{n}_0\mathbf{n}_\infty$$
+
+where $s = e^\lambda$ is the scale factor.
 
 **Motor (General Rigid Motion)**
 
@@ -231,6 +232,12 @@ $$M(t) = M_0\exp(t\log(M_0^{-1}M_1))$$
 - Requires care with branch cuts in logarithm
 - Produces helical interpolation path
 
+**Motor Decomposition**
+
+Given motor $M$, extract translation and rotation:
+1. Rotation: $R = \frac{M}{\|M\|}$ (normalize to unit)
+2. Translation: $T = M\tilde{R}$ (yields translator form)
+
 #### Numerical Stability Formulas
 
 **Null Cone Projection**
@@ -276,11 +283,5 @@ Given unit vectors $\mathbf{a}, \mathbf{b}$:
 $$R = \frac{1 + \mathbf{b}\mathbf{a}}{\|1 + \mathbf{b}\mathbf{a}\|}$$
 
 This rotates $\mathbf{a}$ to $\mathbf{b}$ in their common plane.
-
-**Motor Decomposition**
-
-Given motor $M$, extract translation and rotation:
-1. Rotation: $R = \frac{M}{\|M\|}$ (normalize to unit)
-2. Translation: Extract from $M\tilde{R}$
 
 ---
