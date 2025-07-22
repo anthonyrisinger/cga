@@ -18,13 +18,13 @@ The sandwich product $VXV^{-1}$ preserves lengths and angles—in theory. In pra
 
 These aren't failures of geometric algebra. They're the universal challenges that haunt every computational geometry system: finite precision arithmetic cannot perfectly represent continuous mathematics, numerical operations accumulate errors, and general-purpose representations waste resources on sparse data. The question isn't whether these problems exist—they do, in every framework. The question is how we detect, manage, and mitigate them while preserving the architectural benefits that drew us to geometric algebra in the first place.
 
-This chapter provides that practical foundation. We'll explore storage strategies that exploit natural sparsity patterns, implement numerical algorithms that degrade gracefully near singularities, and honestly assess when geometric algebra offers genuine advantages versus when specialized traditional methods remain superior. Think of this as the conversation you'd have with a senior engineer who has actually built production systems with GA—someone who knows both its power and its limitations.
+This chapter provides the practical foundation for building production systems with GA. We'll explore storage strategies that exploit natural sparsity patterns, implement numerical algorithms that degrade gracefully near singularities, and honestly assess when geometric algebra offers genuine advantages versus when specialized traditional methods remain superior. The guidance emerges from rigorous analysis of implementation trade-offs—the hard-won insights that crystallize when mathematical elegance meets computational reality.
 
 #### The Storage Challenge: Representing Multivectors Efficiently
 
 Every geometric algebra implementation begins with a fundamental decision: how do we store multivectors that theoretically have $2^n$ components but practically exhibit extreme sparsity? In 5D conformal geometric algebra, a general multivector spans 32 basis blades. Yet geometric objects use remarkably few: points need 5 components, lines 10, rotors at most 8. This sparsity isn't accidental—it reflects the low-dimensional nature of the geometric objects we manipulate.
 
-Three approaches have emerged from years of implementation experience, each with distinct trade-offs. The dense array representation allocates all 32 floats regardless of sparsity. It's simple, provides O(1) component access, and plays nicely with SIMD instructions. But for a typical conformal point, we're wasting 108 bytes to store 20 bytes of actual data. Cache misses hurt more than the wasted memory—modern processors excel at streaming through contiguous data, but loading 128 bytes to access 20 bytes of useful information destroys that efficiency.
+Three approaches have emerged from implementation analysis, each with distinct trade-offs. The dense array representation allocates all 32 floats regardless of sparsity. It's simple, provides O(1) component access, and plays nicely with SIMD instructions. But for a typical conformal point, we're wasting 108 bytes to store 20 bytes of actual data. Cache misses hurt more than the wasted memory—modern processors excel at streaming through contiguous data, but loading 128 bytes to access 20 bytes of useful information destroys that efficiency.
 
 The sparse map representation swings to the opposite extreme, storing only non-zero components in a hash map or tree structure. Memory usage becomes proportional to actual data, and operations can skip zero components entirely. But the overhead is real: each component access requires a map lookup, memory allocation becomes dynamic and unpredictable, and cache locality suffers even more than the dense representation. For the moderate sparsity typical in geometric algebra—where objects might have 5-15 non-zero components out of 32—the overhead often outweighs the benefits.
 
@@ -45,7 +45,7 @@ def create_graded_multivector():
     return storage
 ```
 
-Why does this work so well? Because geometric operations naturally preserve grade structure. When multiplying objects of grade $a$ and $b$, the result can only have grades in the range $|a-b|$ to $a+b$. This means we can pre-filter which grades need computation, dramatically reducing unnecessary work. Benchmarks across typical geometric operations show 2-5× speedup over dense arrays—not from clever optimization, but from simply not computing zeros.
+Why does this work so well? Because geometric operations naturally preserve grade structure. When multiplying objects of grade $a$ and $b$, the result can only have grades in the range $|a-b|$ to $a+b$. This means we can pre-filter which grades need computation, dramatically reducing unnecessary work. Algorithmic analysis suggests a potential 2-5× speedup over dense arrays for typical geometric operations—not from clever optimization, but from simply not computing zeros.
 
 The lesson here extends beyond geometric algebra: matching data structures to natural sparsity patterns often provides more benefit than low-level optimization. But this isn't free—grade-stratified storage requires more complex access patterns and careful maintenance of the active-grades mask. The implementation complexity is manageable, but it's real.
 
@@ -202,13 +202,14 @@ Traditional rotation matrices face identical problems—they drift from orthogon
 ```python
 def normalize_rotor(R, tolerance=1e-12):
     """Maintains rotor constraint with numerical awareness."""
+    # In production systems, use proper logging instead of print
 
     # Check if R contains only even grades (required for rotor)
     odd_contamination = extract_odd_grades(R)
     if magnitude(odd_contamination) > tolerance:
-        # Warn about grade contamination
-        print(f"Warning: Rotor contaminated with odd grades: "
-              f"{magnitude(odd_contamination)}")
+        # Log grade contamination warning
+        log_warning(f"Rotor contaminated with odd grades: "
+                   f"{magnitude(odd_contamination)}")
         # Project to even subspace
         R = extract_even_grades(R)
 
@@ -221,7 +222,7 @@ def normalize_rotor(R, tolerance=1e-12):
 
     if magnitude_squared < tolerance:
         # Degenerate rotor - return identity
-        print("Warning: Degenerate rotor cannot be normalized")
+        log_warning("Degenerate rotor cannot be normalized")
         return scalar_multivector(1.0)
 
     # Renormalize
@@ -233,7 +234,7 @@ def normalize_rotor(R, tolerance=1e-12):
         geometric_product(R_normalized, reverse(R_normalized))
     )
     if abs(verify_mag - 1.0) > tolerance:
-        print(f"Warning: Normalization achieved magnitude {verify_mag}")
+        log_warning(f"Normalization achieved magnitude {verify_mag}")
 
     return R_normalized
 ```
@@ -251,14 +252,14 @@ def validate_motor(M, tolerance=1e-10):
 
     # Motor should have only grades 0, 1, 2
     if any(magnitude(grades[g]) > tolerance for g in [3, 4, 5]):
-        print("Warning: Motor contains invalid grades")
+        log_warning("Motor contains invalid grades")
 
     # Grade 1 should only have infinity component
     if magnitude(grades[1]) > tolerance:
         spatial_part = extract_spatial_vector(grades[1])
         if magnitude(spatial_part) > tolerance:
-            print(f"Warning: Motor has spatial vector contamination: "
-                  f"{magnitude(spatial_part)}")
+            log_warning(f"Motor has spatial vector contamination: "
+                       f"{magnitude(spatial_part)}")
 
     # Decompose into translation and rotation
     T, R = decompose_motor(M)
@@ -268,7 +269,7 @@ def validate_motor(M, tolerance=1e-10):
     error = magnitude(subtract(M, M_reconstructed))
 
     if error > tolerance:
-        print(f"Warning: Motor decomposition error: {error}")
+        log_warning(f"Motor decomposition error: {error}")
         # Return cleaned motor
         return M_reconstructed
 
@@ -306,7 +307,7 @@ def stable_meet(A, B, expected_grade=None):
     # Check pseudoscalar conditioning
     I_magnitude = magnitude(I)
     if I_magnitude < 1e-10 or I_magnitude > 1e10:
-        print("Warning: Pseudoscalar poorly conditioned")
+        log_warning("Pseudoscalar poorly conditioned")
         # Fall back to specialized algorithm
         return specialized_intersection(A, B)
 
@@ -336,7 +337,7 @@ def stable_meet(A, B, expected_grade=None):
                 noise += magnitude(extract_grade(result, g))
 
         if noise > 0.01 * magnitude(result_graded):
-            print(f"Warning: Meet produced {noise/magnitude(result_graded)*100:.1f}% noise")
+            log_warning(f"Meet produced {noise/magnitude(result_graded)*100:.1f}% noise")
 
         result = result_graded
 
@@ -351,7 +352,7 @@ Use the meet operation when you need uniform handling of diverse geometric types
 
 Modern processors offer SIMD instructions that can process multiple values simultaneously. Geometric algebra's regular structure seems perfect for SIMD optimization—until you try to implement it.
 
-The challenge is that multivector operations have irregular access patterns. A geometric product between grade-2 and grade-3 elements produces grades 1, 3, and 5. This scattered output breaks the streaming patterns SIMD prefers. Still, careful implementation can achieve meaningful speedups:
+The challenge is that memory access patterns for multivector operations can be irregular. A geometric product between grade-2 and grade-3 elements produces grades 1, 3, and 5. This scattered output breaks the streaming patterns SIMD prefers. Still, careful implementation can achieve meaningful speedups:
 
 ```python
 def simd_rotor_batch_transform(rotors, vectors):
@@ -385,7 +386,7 @@ def simd_rotor_batch_transform(rotors, vectors):
     return results
 ```
 
-Realistic benchmarks show 2-4× speedup for batch operations—valuable but not transformative. The speedup comes from processing multiple objects in parallel, not from making individual operations faster.
+Algorithmic analysis suggests a potential 2-4× speedup for batch operations—valuable but not transformative. The speedup comes from processing multiple objects in parallel, not from making individual operations faster.
 
 GPU acceleration offers better parallelism for massive batches:
 
@@ -469,7 +470,7 @@ def production_ga_interfaces():
         # Check orthogonality
         orthogonality_error = np.max(np.abs(R_mat @ R_mat.T - np.eye(3)))
         if orthogonality_error > 1e-6:
-            print(f"Warning: Non-orthogonal rotation matrix, error: {orthogonality_error}")
+            log_warning(f"Non-orthogonal rotation matrix, error: {orthogonality_error}")
             # Apply closest orthogonal matrix
             U, _, Vt = np.linalg.svd(R_mat)
             R_mat = U @ Vt
@@ -490,9 +491,9 @@ These interfaces aren't temporary scaffolding—they're permanent architectural 
 
 The overhead of conversion is typically negligible compared to the computation being performed. What matters is that these interfaces be robust, well-tested, and maintained as first-class components of your system.
 
-#### When to Use Geometric Algebra: A Honest Decision Tree
+#### When to Use Geometric Algebra: An Honest Decision Tree
 
-After years of implementation experience, here's practical guidance on when geometric algebra justifies its costs:
+Analysis of implementation trade-offs indicates clear criteria for when geometric algebra justifies its costs:
 
 **Use GA when you have:**
 - Mixed geometric primitives (points, lines, planes, spheres) that must interact uniformly
@@ -516,7 +517,7 @@ After years of implementation experience, here's practical guidance on when geom
 
 The decision isn't binary. Many successful systems use GA for high-level geometric reasoning while optimizing critical paths with traditional methods.
 
-#### Building Production Systems: Lessons from the Trenches
+#### Building Production Systems: Engineering Considerations
 
 Building production-quality GA systems requires attention to software engineering fundamentals that go beyond mathematical elegance:
 
