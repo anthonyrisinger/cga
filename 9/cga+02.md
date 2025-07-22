@@ -4,7 +4,7 @@ Stand before a mirror. Raise your right hand—your reflection raises its left. 
 
 Try this experiment. Take two mirrors and place them at a 45-degree angle. Look at an object reflected in the first mirror, then reflected again in the second. The object has rotated by 90 degrees—exactly twice the angle between the mirrors. Add a third mirror and you can create any rotation in space. Four mirrors can produce any rigid transformation whatsoever.
 
-This observation reveals interesting mathematical structure that we can explore more deeply.
+This observation reveals a fundamental mathematical structure that can be explored more deeply.
 
 #### The Experimental Journey
 
@@ -48,10 +48,10 @@ Let's systematically explore which transformations can be built from reflections
 |----------------|-------------------|------------------------|----------------|-------------------|
 | Identity | 0 | None | $I$ | Everything |
 | Reflection | 1 | The mirror itself | $-\mathbf{n}X\mathbf{n}$ | The mirror plane |
-| Rotation (2D) | 2 | Two lines at angle θ/2 | $R = \mathbf{n}_2\mathbf{n}_1$ | Intersection point |
-| Rotation (3D) | 2 | Two planes at angle θ/2 | $R = \mathbf{n}_2\mathbf{n}_1$ | Intersection line (axis) |
-| Translation | 2 | Two parallel planes | $T = \mathbf{n}_2\mathbf{n}_1$ | Direction ⊥ to planes |
-| Glide reflection | 3 | Two parallel + one ⊥ | $G = \mathbf{n}_3\mathbf{n}_2\mathbf{n}_1$ | Glide axis |
+| Rotation (2D) | 2 | Two lines at angle $\theta$/2 | $R = \mathbf{n}_2\mathbf{n}_1$ | Intersection point |
+| Rotation (3D) | 2 | Two planes at angle $\theta$/2 | $R = \mathbf{n}_2\mathbf{n}_1$ | Intersection line (axis) |
+| Translation | 2 | Two parallel planes | $T = \mathbf{n}_2\mathbf{n}_1$ | Direction $\perp$ to planes |
+| Glide reflection | 3 | Two parallel + one $\perp$ | $G = \mathbf{n}_3\mathbf{n}_2\mathbf{n}_1$ | Glide axis |
 | Screw motion | 4 | Two pairs of planes | $S = \mathbf{n}_4\mathbf{n}_3\mathbf{n}_2\mathbf{n}_1$ | Screw axis |
 | General rigid motion | ≤4 | Varies | Product of reflections | Varies |
 
@@ -73,7 +73,7 @@ The sandwich pattern we observed for reflection appears in many mathematical con
 | Lie Theory | $e^{-tX}Ye^{tX}$ | Adjoint action | Flow conjugation |
 | Computer Graphics | $R^T\mathbf{v}R$ | Rotation (as quaternion) | Quaternion conjugation |
 
-These patterns appear across different fields, each developed for specific purposes. In each case, the sandwich structure serves the particular needs of that domain—preserving inner products in quantum mechanics, maintaining group structure in abstract algebra, or efficiently composing rotations in computer graphics. While these similarities are mathematically interesting, each field has good reasons for its particular formulation, and these traditional forms often remain most appropriate for their specific applications.
+These patterns appear across different fields, each developed for specific purposes. In each case, the sandwich structure serves the particular needs of that domain—preserving inner products in quantum mechanics, maintaining group structure in abstract algebra, or efficiently composing rotations in computer graphics. While these similarities are mathematically interesting, each field has good reasons for its particular formulation, and these traditional forms often remain most appropriate for their specific applications. The point is not that these are identical operations, but that the algebraic pattern of conjugation is a recurring motif for transformation and change of context across many scientific disciplines.
 
 #### Computational Implications
 
@@ -81,16 +81,16 @@ Understanding reflection as a fundamental operation offers both advantages and t
 
 **Table 7: Computational Reflection Primitives**
 
-| Operation | Traditional Approach | Reflection-Based Approach | Speedup Factor | Numerical Advantage |
-|-----------|---------------------|--------------------------|----------------|-------------------|
-| 3D Rotation | 9 multiplies, 6 adds | 2 reflections: 12 mults | 0.75× | No trigonometry |
-| Rotation composition | Matrix multiply: 27 ops | Geometric product: 16 ops | 1.7× | Preserves unit property |
-| Interpolation | Quaternion SLERP | Logarithm in even subalgebra | 1.2× | Natural geodesic |
-| Inverse | Matrix inversion or transpose | Reverse product order | ∞ | Always exact |
-| Fixed point extraction | Solve (M-I)x = 0 | Intersection of mirrors | 2× | Geometric meaning |
-| Decomposition | Matrix → axis/angle | Factor into reflections | 1.5× | Unique factorization |
+| Operation | Traditional Approach | Reflection-Based Approach | Computational Assessment | Numerical Advantage |
+|-----------|---------------------|--------------------------|-------------------------|-------------------|
+| 3D Rotation | 9 multiplies, 6 adds | 2 reflections: 12 mults | More operations but avoids trigonometry | No trigonometry |
+| Rotation composition | Matrix multiply: 27 ops | Geometric product: 16 ops | Fewer total operations | Preserves unit property |
+| Interpolation | Quaternion SLERP | Logarithm in even subalgebra | Comparable complexity | Natural geodesic |
+| Inverse | Matrix inversion or transpose | Reverse product order | Algebraic reversal vs. numerical computation | Always exact |
+| Fixed point extraction | Solve (M-I)x = 0 | Intersection of mirrors | Direct geometric interpretation | Geometric meaning |
+| Decomposition | Matrix → axis/angle | Factor into reflections | Similar operation count | Unique factorization |
 
-For 3D rotation, the reflection-based approach requires more operations (0.75× speed) but offers the advantage of avoiding trigonometric functions, which can be beneficial in contexts where trigonometry is expensive or where maintaining exact algebraic relationships is important. The geometric interpretation of fixed points as mirror intersections can provide clearer insight for debugging and analysis. Each approach has its place depending on the specific requirements of the application.
+For 3D rotation, the reflection-based approach requires more operations but offers the advantage of avoiding trigonometric functions, which can be beneficial in contexts where trigonometry is expensive or where maintaining exact algebraic relationships is important. The geometric interpretation of fixed points as mirror intersections can provide clearer insight for debugging and analysis. Each approach has its place depending on the specific requirements of the application.
 
 #### Historical Recognition
 
@@ -112,7 +112,7 @@ Each mathematician contributed valuable insights suited to their problem domain.
 
 #### Exploring New Possibilities
 
-We've discovered that traditional vector algebra doesn't directly support the sandwich pattern we observed. The expression $\mathbf{v}' = -\mathbf{n}\mathbf{v}\mathbf{n}$ requires a multiplication that preserves both magnitude and directional information while producing another vector—something neither the dot nor cross product provides.
+Analysis shows that traditional vector algebra does not directly support the sandwich pattern we observed. The expression $\mathbf{v}' = -\mathbf{n}\mathbf{v}\mathbf{n}$ requires a multiplication that preserves both magnitude and directional information while producing another vector—something neither the dot nor cross product provides.
 
 This observation suggests exploring whether new algebraic structures might offer additional capabilities. Such a product would need to:
 1. Combine vectors to produce new geometric objects
