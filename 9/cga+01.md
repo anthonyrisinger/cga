@@ -37,7 +37,7 @@ Let's examine this pattern more systematically. Consider implementing geometric 
 
 Each traditional algorithm represents years, sometimes decades, of refinement. Plücker coordinates provide an elegant mathematical framework for line-line intersection that naturally handles all configurations. The Möller-Trumbore algorithm achieves remarkable efficiency through careful consideration of modern CPU architectures. These aren't arbitrary choices—they're the result of extensive optimization for their specific contexts.
 
-The geometric algebra approach offers something different: a single computational pattern that handles all these cases. This unification comes with trade-offs. The `meet` operation, while conceptually elegant, requires grade-specific implementation strategies internally. Computing the meet of two spheres involves different computational paths than the meet of a line and a plane, even though the high-level operation remains the same. The unified notation reduces the number of distinct algorithms to understand and maintain, but the implementation still respects the geometric structure of each case.
+The geometric algebra approach offers something different: a single computational pattern that handles all these cases. This unification comes with trade-offs. The `meet` operation, while conceptually unified, internally requires grade-specific computational paths—computing the meet of two spheres follows different logic than the meet of a line and plane. The unified notation reduces the number of distinct algorithms to understand and maintain, but the implementation still respects the geometric structure of each case.
 
 #### The Representation Puzzle
 
@@ -63,7 +63,7 @@ Every computational geometry system faces numerical challenges as scale and prec
 
 **Table 3: Numerical Stability Across Frameworks**
 
-| Algorithm | Challenging Configuration | Error Behavior | Traditional Mitigation | GA Consideration |
+| Algorithm | Challenging Configuration | Error Behavior | Traditional Mitigation | GA Approach |
 |-----------|--------------------------|----------------|----------------------|------------------|
 | Line-line nearest points | Nearly parallel lines | $O(1/\sin^2\theta)$ | Threshold + special case | Meet operation condition number |
 | Plane intersection | Nearly parallel planes | $O(1/\sin\theta)$ | SVD or regularization | Dual operation stability |
@@ -79,7 +79,7 @@ GA introduces its own numerical considerations. The geometric product's conditio
 
 #### Complexity Growth Patterns
 
-As geometric systems expand to handle more primitive types and operations, complexity grows in predictable patterns:
+As geometric systems expand to handle more primitive types and operations, complexity grows in predictable patterns. The following order-of-magnitude estimates illustrate how interface complexity can dominate system architecture:
 
 **Table 4: System Complexity Scaling**
 
@@ -95,7 +95,7 @@ Real systems manage this complexity through careful architectural choices. Modul
 
 GA addresses complexity differently. Rather than reducing the total amount of computation, it reduces the number of distinct patterns that must be understood and maintained. The meet operation requires different computational strategies for different grade combinations—intersecting two spheres (grade 1 objects) follows different internal paths than intersecting two lines (grade 2 objects). However, the conceptual framework remains unified, and the reduction in distinct algorithms can significantly simplify system architecture.
 
-Major CAD systems and game engines succeed through sophisticated software engineering practices. They employ rigorous testing frameworks, maintain extensive documentation, and develop domain-specific tools. These practices remain crucial when adopting geometric algebra. The framework provides conceptual unification, but building robust systems still requires careful engineering.
+Major CAD systems and game engines succeed through sophisticated software engineering practices that manage this inherent complexity. They employ rigorous testing frameworks, maintain extensive documentation, and develop domain-specific tools. These practices remain crucial when adopting geometric algebra. The framework provides conceptual unification, but building robust systems still requires careful engineering.
 
 #### Recognizing the Pattern
 
@@ -117,7 +117,7 @@ Understanding these patterns clarifies where geometric algebra provides the most
 
 Traditional methods remain optimal for narrow, performance-critical tasks. Real-time triangle rasterization, for example, has been optimized for decades to work with specific hardware architectures. Attempting to replace such highly-tuned algorithms with general GA operations would likely reduce performance without compensating benefits.
 
-The power of geometric algebra lies not in wholesale replacement but in providing a framework that reveals connections between specialized tools. When building a robotics system that needs to compose rigid transformations, GA's motors provide a cleaner abstraction than separate rotation and translation components. When implementing a CAD kernel that must handle diverse geometric queries, the meet operation's uniformity can significantly reduce architectural complexity. When teaching geometric concepts, GA's unified framework can provide insights that would be difficult to achieve with fragmented tools.
+The power of geometric algebra lies not in wholesale replacement but in providing a framework that reveals connections between specialized tools. In practice, this often leads to hybrid architectures that leverage GA's unification where it provides the most value while retaining specialized methods for performance-critical operations. When building a robotics system that needs to compose rigid transformations, GA's motors provide a cleaner abstraction than separate rotation and translation components. When implementing a CAD kernel that must handle diverse geometric queries, the meet operation's uniformity can significantly reduce architectural complexity. When teaching geometric concepts, GA's unified framework can provide insights that would be difficult to achieve with fragmented tools.
 
 Adopting geometric algebra requires careful consideration of trade-offs. The framework typically requires more memory per geometric object (a conformal point needs up to 5 floats versus 3 for a Euclidean point, though sparse representations can reduce this overhead). Some operations that are simple in specialized frameworks may require more computation in GA. The learning curve, while rewarding, requires an upfront investment comparable to learning any sophisticated mathematical framework.
 
