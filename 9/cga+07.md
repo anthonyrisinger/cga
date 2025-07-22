@@ -25,7 +25,7 @@ IPNS excels when testing membership or constraints. To check if point $P$ lies o
 
 $$P \cdot S = 0$$
 
-One inner product gives the answer. This is optimal for collision detection, containment queries, and constraint satisfaction.
+One inner product gives the answer. The IPNS representation of the sphere $S$ is precisely the vector that makes this inner product test equivalent to the traditional $\|\mathbf{p} - \mathbf{c}\|^2 - r^2 = 0$ check. This is optimal for collision detection, containment queries, and constraint satisfaction.
 
 **Computational Guideline**: Choose OPNS when building from parts. Choose IPNS when testing against constraints. The representation that makes your primary operation trivial is usually the right choice.
 
@@ -40,7 +40,7 @@ This makes intuitive sense: if $X$ is already part of $A$, adding it again via o
 **Line Construction**: A line through points $P_1$ and $P_2$:
 $$L = P_1 \wedge P_2 \wedge \mathbf{n}_\infty$$
 
-Cost: One 3-way outer product (approximately 30 floating-point operations in 5D conformal space).
+Cost: One 3-way outer product (a moderately expensive operation in 5D conformal space).
 
 **Circle Construction**: A circle through points $P_1$, $P_2$, and $P_3$:
 $$C = P_1 \wedge P_2 \wedge P_3$$
@@ -61,7 +61,7 @@ In IPNS, we define objects through constraints using the inner product:
 **Plane Representation**: A plane with unit normal $\mathbf{n}$ at distance $d$ from origin:
 $$\pi = \mathbf{n} + d\mathbf{n}_\infty$$
 
-Testing point membership: One inner product (5 multiplications, 4 additions).
+Testing point membership: One inner product (a computationally inexpensive operation).
 
 **Sphere Representation**: A sphere with center $\mathbf{c}$ and radius $r$:
 $$S = \mathbf{c} + \frac{1}{2}\mathbf{c}^2\mathbf{n}_\infty + \mathbf{n}_0 - \frac{1}{2}r^2\mathbf{n}_\infty$$
@@ -80,7 +80,7 @@ where $I = \mathbf{e}_1\mathbf{e}_2\mathbf{e}_3\mathbf{n}_0\mathbf{n}_\infty$ is
 
 This principle provides theoretical unity, but practical implementation requires care. The dual operation involves:
 - Multiplication by the pseudoscalar inverse (a 32-component multivector in 5D)
-- Significant computation: approximately 150-200 floating-point operations for general objects
+- Significant computation: a computationally expensive operation for general objects
 - Potential numerical sensitivity when the pseudoscalar has small magnitude
 
 **Implementation Reality**: While duality provides theoretical elegance, production systems often cache both representations for frequently-used objects rather than repeatedly computing duals. This trades memory for computation—a classic engineering decision.
@@ -111,13 +111,13 @@ This formula tells a concrete story in four acts:
 4. **Reframe to construction**: Apply dual again to return to standard form
 
 While conceptually elegant, this involves three expensive operations:
-- Two dual operations (each ~150-200 floating-point operations)
-- One outer product (varies by grade, typically 50-100 operations)
-- Total: approximately 350-500 operations for general objects
+- Two dual operations (each a computationally expensive operation)
+- One outer product (varies by grade, typically a moderately expensive operation)
+- Total: a computationally expensive sequence of operations for general objects
 
 Compare this to specialized algorithms:
-- Line-plane intersection (traditional): ~20 operations
-- Sphere-sphere intersection (traditional): ~30 operations
+- Line-plane intersection (traditional): a highly optimized algorithm with minimal operations
+- Sphere-sphere intersection (traditional): another highly optimized specialized routine
 
 The meet operation provides generality at a computational cost. It excels when:
 - You need uniform handling of diverse object types
@@ -148,11 +148,11 @@ The join operation ($\wedge$ when objects are disjoint) constructs the smallest 
 
 **Table 27: Join Operation Matrix**
 
-| Object A | Object B | $A \wedge B$ Result | Geometric Meaning | Grade Sum | Cost (ops) |
-|----------|----------|---------------------|-------------------|-----------|------------|
-| Point | Point | Line/Point pair | Line through both | 1 + 1 = 2 | ~30 |
-| Point | Line | Plane | Plane containing both | 1 + 2 = 3 | ~50 |
-| Line | Line | Plane/4-blade | Plane (if coplanar) | 2 + 2 = 4 or less | ~80 |
+| Object A | Object B | $A \wedge B$ Result | Geometric Meaning | Grade Sum | Cost |
+|----------|----------|---------------------|-------------------|-----------|------|
+| Point | Point | Line/Point pair | Line through both | 1 + 1 = 2 | Moderate |
+| Point | Line | Plane | Plane containing both | 1 + 2 = 3 | Moderate |
+| Line | Line | Plane/4-blade | Plane (if coplanar) | 2 + 2 = 4 or less | Higher |
 
 The join reveals the constructive nature of geometry: complex objects built from simpler constituents through the outer product.
 
@@ -187,11 +187,11 @@ def line_line_intersection_traditional(p1, d1, p2, d2):
         else:
             return "parallel"
 
-    # Solve for parameters (about 20 operations)
+    # Solve for parameters (minimal operation count)
     # ... parametric solution ...
     return intersection_point
 ```
-Cost: ~20 operations for common case, but requires separate parallel/skew logic.
+Cost: Minimal operation count for common case, but requires separate parallel/skew logic.
 
 **Geometric Algebra Method**:
 ```python
@@ -208,7 +208,7 @@ def line_line_intersection_ga(L1, L2):
     else:
         return "coincident"
 ```
-Cost: ~100 operations, but no special cases in the algorithm itself.
+Cost: Significantly higher operation count, but no special cases in the algorithm itself.
 
 **Engineering Decision**: Use GA when you value:
 - Uniform code structure
@@ -280,7 +280,7 @@ The meet operation's three-step process can accumulate errors through specific m
 
 **Second Dual ($(A^* \wedge B^*)^*$)**: The final dualization amplifies any errors accumulated in the previous stages. Small errors in the wedge product become magnified when divided by the potentially small magnitude of the intermediate result.
 
-Consider two nearly parallel planes separated by angle $\epsilon$. Their duals map to two bivectors (representing lines at infinity) that differ by approximately $\epsilon$. The wedge product produces a 4-blade with magnitude proportional to $\epsilon$, which after the second dual yields a line whose coordinates have been amplified by factor $1/\epsilon$. For $\epsilon = 10^{-6}$, coordinate values can explode by a factor of $10^6$, rendering the result numerically meaningless.
+Consider two nearly parallel planes separated by angle $\epsilon$. Their duals map to two bivectors (representing lines at infinity) that differ by approximately $\epsilon$. The wedge product produces a 4-blade with magnitude proportional to $\epsilon$, which after the second dual yields a line whose coordinates have been amplified by factor $1/\epsilon$. For $\epsilon = 10^{-6}$, coordinate values can explode by a factor of $10^6$, rendering the result numerically meaningless. This amplification of error by a factor inversely proportional to the sine of the angle between objects is a hallmark of numerical instability in many geometric intersection algorithms; the meet operation is not immune to this fundamental challenge.
 
 **Mitigation Strategies**:
 - Pre-normalize objects to standard magnitude
@@ -321,13 +321,13 @@ The incidence algebra enables sophisticated constructions, each with its cost:
 ```python
 def project_point_to_line(P, L):
     """Project point onto line."""
-    # Method 1: Using inner products (fast)
-    # Cost: ~30 operations
+    # Method 1: Using inner products (computationally direct)
+    # Cost: relatively inexpensive
 
-    # Method 2: Using meet with plane (general)
+    # Method 2: Using meet with plane (more general but computationally intensive)
     # Construct plane through P perpendicular to L
     # Meet plane with line
-    # Cost: ~200 operations
+    # Cost: significantly more expensive
 
     # Choose based on your needs
     pass
@@ -409,7 +409,7 @@ Most production systems benefit from a hybrid approach: GA for high-level struct
 
 1. Explain why the meet operation $(A^* \wedge B^*)^*$ works identically for all geometric primitives. What role does each dual operation play? What is the computational cost of this generality?
 
-2. The traditional line-line intersection algorithm uses ~20 operations but needs special logic for parallel/skew cases. The GA meet operation uses ~100 operations but handles all cases uniformly. When would you choose each approach?
+2. The traditional line-line intersection algorithm uses a minimal operation count but needs special logic for parallel/skew cases. The GA meet operation uses significantly more operations but handles all cases uniformly. When would you choose each approach?
 
 3. Why do some objects naturally suit OPNS representation while others suit IPNS? Give specific examples and explain the computational advantages of each choice.
 
