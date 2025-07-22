@@ -62,28 +62,28 @@ Key relation: $\mathbf{n}_0 \cdot \mathbf{n}_\infty = -1$ (defines conformal str
 
 Objects possess dual representations: **OPNS** (Outer Product Null Space) defines objects constructively, while **IPNS** (Inner Product Null Space) defines objects as constraints.
 
-| Object | Symbol | OPNS Representation | IPNS Representation | Incidence Test |
-|--------|--------|---------------------|---------------------|----------------|
-| Point | $P$ | $P$ (grade 1) | Same (grade 1) | $P^2 = 0$ |
+| Object | Symbol | OPNS Representation | IPNS Representation | Key Property / Test |
+|--------|--------|---------------------|---------------------|---------------------|
+| Point | $P$ | $P$ (grade 1) | Same (grade 1) | Property: $P^2 = 0$ |
 | Line | $L$ | $P_1 \wedge P_2 \wedge \mathbf{n}_\infty$ (grade 2) | $(\pi_1 \wedge \pi_2)^*$ (grade 3) | Point on line: $P \wedge L = 0$ |
 | Plane | $\pi$ | $(P_1 \wedge P_2 \wedge P_3 \wedge \mathbf{n}_\infty)^*$ (grade 1) | $\mathbf{n} + d\mathbf{n}_\infty$ (grade 1) | Point on plane: $P \cdot \pi = 0$ |
 | Sphere | $S$ | $(P_1 \wedge P_2 \wedge P_3 \wedge P_4)^*$ (grade 1) | $C - \frac{1}{2}r^2\mathbf{n}_\infty$ (grade 1) | Point on sphere: $P \cdot S = 0$ |
 | Circle | $C$ | $P_1 \wedge P_2 \wedge P_3$ (grade 2) | $(S_1 \wedge S_2)^*$ or $(S \wedge \pi)^*$ (grade 3) | Point on circle: $P \wedge C = 0$ |
-| Point Pair | $PP$ | $P_1 \wedge P_2$ (grade 2) | $(S_1 \wedge S_2 \wedge \pi)^*$ (grade 3) | $PP^2 \geq 0$ |
+| Point Pair | $PP$ | $P_1 \wedge P_2$ (grade 2) | $(S_1 \wedge S_2 \wedge \pi)^*$ (grade 3) | Property: $PP^2 \geq 0$ |
 
 #### Transformations (Versors)
 
-A versor $V$ transforms objects via the sandwich product: $X' = VXV^{-1}$ (or $X' = VX\tilde{V}$ for normalized versors).
+A versor $V$ transforms objects via the sandwich product: $X' = VXV^{-1}$. For normalized versors, $V^{-1} = \tilde{V}$.
 
 | Transformation | Symbol | Versor Form | Application | Type |
 |---------------|--------|-------------|-------------|------|
 | Reflection | $\sigma$ | Unit vector/hyperplane | $X' = -\sigma X \sigma$ | Odd versor |
-| Rotation | $R$ | $\exp(-\frac{\theta}{2}B) = \cos\frac{\theta}{2} - B\sin\frac{\theta}{2}$ | $X' = RXR^{-1}$ | Even versor (rotor) |
-| Translation | $T$ | $1 - \frac{1}{2}\mathbf{t}\mathbf{n}_\infty$ | $X' = TXT^{-1}$ | Even versor |
-| Scaling | $D$ | $\exp(\frac{\lambda}{2}\mathbf{n}_0\mathbf{n}_\infty)$ | $X' = DXD^{-1}$ | Even versor, scale $e^\lambda$ |
+| Rotation | $R$ | $\exp(-\frac{\theta}{2}B) = \cos\frac{\theta}{2} - B\sin\frac{\theta}{2}$ | $X' = RX\tilde{R}$ | Even versor (rotor) |
+| Translation | $T$ | $1 - \frac{1}{2}\mathbf{t}\mathbf{n}_\infty$ | $X' = TX\tilde{T}$ | Even versor |
+| Scaling | $D$ | $\exp(\frac{\lambda}{2}\mathbf{n}_0\mathbf{n}_\infty)$ | $X' = DX\tilde{D}$ | Even versor, scale $e^\lambda$ |
 | Inversion | $S$ | Sphere $S$ | $X' = SXS^{-1}$ | Odd versor |
-| Motor | $M$ | $TR$ (screw motion) | $X' = MXM^{-1}$ | Even versor |
-| Transversion | $K$ | $1 + \mathbf{k}\mathbf{n}_0$ | $X' = KXK^{-1}$ | Special conformal |
+| Motor | $M$ | $TR$ (screw motion) | $X' = MX\tilde{M}$ | Even versor |
+| Transversion | $K$ | $1 + \mathbf{k}\mathbf{n}_0$ | $X' = KX\tilde{K}$ | Special conformal |
 
 #### Special Operations and Relations
 
