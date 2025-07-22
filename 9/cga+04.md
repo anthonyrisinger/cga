@@ -4,7 +4,7 @@ The mathematics we've built gives us power—the geometric product unifies our o
 
 This isn't a minor inconvenience to be patched over. It's a fundamental incompleteness that suggests we're not seeing the whole picture. What if the problem isn't with our algebra but with our space? What if three-dimensional Euclidean space, for all its familiarity, is too small a stage for the full drama of geometric transformation?
 
-The breakthrough we're about to explore doesn't just solve the translation problem—it reveals that points, lines, planes, circles, and spheres are all aspects of a deeper geometric unity. By expanding our vision beyond Euclidean boundaries, we'll discover a space where every transformation becomes multiplicative, every intersection reduces to a single operation, and the artificial distinctions between different geometric algorithms simply vanish.
+The breakthrough explored here doesn't just solve the translation problem—it reveals that points, lines, planes, circles, and spheres are all aspects of a deeper geometric unity. By expanding our vision beyond Euclidean boundaries, analysis reveals a space where every transformation becomes multiplicative, every intersection reduces to a single operation, and the artificial distinctions between different geometric algorithms simply vanish.
 
 ---
 
@@ -67,7 +67,7 @@ The conformal group in 3D includes:
 - 1 scaling degree of freedom
 - 3 special conformal transformations (inversions through spheres)
 
-That's 10 parameters total. To represent this 10-dimensional group as orthogonal transformations, we need a space where the orthogonal group has at least dimension 10. For the orthogonal group $O(p,q)$, the dimension is $(p+q)(p+q-1)/2$. The minimal choice is a 5-dimensional space.
+That's 10 parameters total. To represent this 10-dimensional group as orthogonal transformations, we need a space where the orthogonal group has at least dimension 10. For the orthogonal group $O(p,q)$, the dimension is $(p+q)(p+q-1)/2$ (counting independent rotation planes). The minimal choice is a 5-dimensional space.
 
 But dimension alone isn't enough—the metric signature matters crucially for creating the right geometric structure.
 
@@ -102,7 +102,7 @@ These can be constructed from an orthonormal pair $\{\mathbf{e}_+, \mathbf{e}_-\
 - $\mathbf{n}_0 = \frac{1}{2}(\mathbf{e}_- - \mathbf{e}_+)$
 - $\mathbf{n}_\infty = \mathbf{e}_- + \mathbf{e}_+$
 
-This construction enables the linearization of translations we've been seeking.
+This construction enables the linearization of translations.
 
 #### Understanding the Trade-offs
 
@@ -145,8 +145,8 @@ Beyond storage, we must consider computational costs:
 
 **Table 16: Detailed Performance Analysis**
 
-| Operation | Traditional Method | Cost | Conformal Method | Cost | Benefit |
-|-----------|-------------------|------|------------------|------|---------|
+| Operation | Traditional Method | Cost (ops) | Conformal Method | Cost (ops) | Benefit |
+|-----------|-------------------|------------|------------------|------------|---------|
 | Storage per point | 3 floats | 12 bytes | 5 floats (sparse: 4) | 20 bytes | 1.67× overhead |
 | Storage per transform | 4×4 matrix | 64 bytes | 8-float motor | 32 bytes | 0.5× (more compact!) |
 | Point transformation | Matrix-vector multiply | 12 mul, 9 add | Motor sandwich | 28 mul, 26 add | ~2.3× slower |
@@ -212,7 +212,7 @@ def extract_euclidean_point(P):
     for the extraction process.
     """
     # Normalize by the n_infinity component
-    scale = -1.0 / (P[4] - P[3])  # -1/(n_inf coefficient)
+    scale = -1.0 / (P[4] - P[3])  # -1/(n_infinity - n_0 coefficient)
 
     return [
         P[0] * scale,  # x coordinate
@@ -236,7 +236,7 @@ These benefits come at the cost of:
 - Computational overhead for individual operations
 - Conceptual complexity requiring significant learning investment
 
-The next chapter will detail the conformal embedding concretely, showing exactly how Euclidean objects map to null vectors and how to implement the fundamental operations. We'll provide practical algorithms for converting between representations and demonstrate how the theoretical unification translates to working code. While this deterministic model provides powerful architectural benefits, its integration with the probabilistic methods required by many modern systems remains an open and critical challenge for the practitioner.
+The next chapter details practical algorithms for converting between representations and demonstrates how the theoretical unification translates to working code. While this deterministic model provides powerful architectural benefits, its integration with the probabilistic methods required by many modern systems remains an open and critical challenge for the practitioner.
 
 Remember: conformal geometry is a powerful option in your computational toolkit, not a universal solution. Choose it when its strengths align with your system's requirements, not because it promises mathematical elegance. The best geometry for your application is the one that solves your specific problems efficiently.
 
