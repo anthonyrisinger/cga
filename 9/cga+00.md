@@ -30,7 +30,7 @@ This book guides you through geometric algebra as a technology evaluation and ad
 
 **Act IV** explores emerging applications in quantum computing, machine learning, and even more speculative domains where geometric structure provides insight. These frontiers show geometric algebra's potential without hyperbole—the framework provides new perspectives on entanglement, equivariant neural networks, and geometric approaches to optimization that suggest promising research directions. Where applications push into uncharted territory, we maintain the same rigorous analysis, acknowledging both theoretical promise and practical limitations.
 
-**Act V** provides implementation guidance for production systems. We'll discuss practical matters: efficient data structures for sparse multivectors, SIMD optimization strategies, and integration with existing codebases. We'll also honestly address current limitations in debugging tools and library ecosystems compared to mature alternatives, while exploring emerging solutions and best practices from practitioners who have successfully deployed GA in production.
+**Act V** provides implementation guidance for production systems. We'll discuss practical matters: efficient data structures for sparse multivectors, SIMD optimization strategies, and integration with existing codebases. We'll also honestly address current limitations in debugging tools and library ecosystems compared to mature alternatives, while exploring emerging solutions and best practices derived from production-focused implementations of GA.
 
 ### When to Use Geometric Algebra
 
@@ -195,4 +195,4 @@ A versor $V$ transforms objects via the sandwich product: $X' = VXV^{-1}$ (or $X
 
 ---
 
-*For detailed explanations, derivations, and computational algorithms, consult the corresponding chapters. This guide serves as a rapid reference for implementation and problem-solving within the Conformal Geometric Algebra framework.*
+*Armed with this notational foundation, we now begin our journey into the unifying patterns that emerge when traditional geometric tools must coordinate in increasingly complex systems.*
