@@ -34,7 +34,7 @@ The outer product (wedge product) $\mathbf{a} \wedge \mathbf{b}$ takes the oppos
 - The orientation (which way is "positive" rotation)
 - The area of the parallelogram they define
 
-But extension, like projection, is lossy in its own way. The bivector $\mathbf{a} \wedge \mathbf{b}$ treats many different vector pairs as equivalent. The pairs $(\mathbf{a}, \mathbf{b})$ and $(2\mathbf{a}, \frac{1}{2}\mathbf{b})$ produce the same bivector. Given only the wedge product, you cannot recover:
+But extension, like projection, is lossy in its own way. The bivector $\mathbf{a} \wedge \mathbf{b}$ treats many different vector pairs as equivalent. The pairs $(\mathbf{a}, \mathbf{b})$ and $(2\mathbf{a}, \frac{1}{2}\mathbf{b})$ produce the same bivector. Given only the outer product, you cannot recover:
 
 - The individual vector lengths
 - The angle between them
@@ -44,13 +44,13 @@ The antisymmetry $\mathbf{a} \wedge \mathbf{b} = -\mathbf{b} \wedge \mathbf{a}$ 
 
 #### The Synthesis: A Lossless Geometric Product
 
-Here's the crucial engineering insight: the dot and wedge products are lossy projections onto different subspaces. The dot product projects onto grade-0 (scalars), the wedge product extends to grade-2 (bivectors). These subspaces are completely independent—they share no common elements except zero.
+Here's the crucial engineering insight: the dot and outer products are lossy projections onto different subspaces. The dot product projects onto grade-0 (scalars), the outer product extends to grade-2 (bivectors). These subspaces are completely independent—they share no common elements except zero.
 
 This independence immediately presents a solution. What if we simply keep both parts?
 
 $$\mathbf{ab} = \mathbf{a} \cdot \mathbf{b} + \mathbf{a} \wedge \mathbf{b}$$
 
-This isn't an arbitrary combination. It's the unique, minimal way to preserve all information from both vectors. The scalar part lives in grade-0, the bivector part in grade-2. They can coexist without interference, like storing different frequency bands in a signal.
+This isn't an arbitrary combination. It represents a unique and minimal way to preserve all information from both vectors. The scalar part lives in grade-0, the bivector part in grade-2. They can coexist without interference, like storing different frequency bands in a signal.
 
 To verify this is truly lossless, we need to show we can recover everything about the original vectors' relationship:
 
@@ -154,7 +154,7 @@ Each classical product extracts specific information, discarding the rest. The g
 
 The choice between lossy and lossless products is a fundamental engineering decision:
 
-**Use lossy products (dot, cross, wedge) when:**
+**Use lossy products (dot, cross, outer) when:**
 - You need only one aspect of the geometric relationship
 - Performance is paramount and you can't afford extra computation
 - The discarded information is truly irrelevant to your problem
@@ -163,7 +163,7 @@ The choice between lossy and lossless products is a fundamental engineering deci
 **Examples:**
 - Dot product for projecting forces along directions
 - Cross product for surface normals in graphics
-- Wedge product for area calculations
+- Outer product for area calculations
 
 **Use the lossless geometric product when:**
 - You need the complete geometric relationship
@@ -208,7 +208,7 @@ def geometric_product_3d(a: Vector3D, b: Vector3D) -> Multivector3D:
     # This captures metric information
     scalar = a.x * b.x + a.y * b.y + a.z * b.z
 
-    # Bivector part: wedge product (grade 2)
+    # Bivector part: outer product (grade 2)
     # This captures orientation information
     # Note: bivectors in 3D have three components (xy, xz, yz planes)
     bivector_xy = a.x * b.y - a.y * b.x
@@ -217,6 +217,7 @@ def geometric_product_3d(a: Vector3D, b: Vector3D) -> Multivector3D:
 
     # Return complete multivector
     # No information is lost - we can recover any traditional product from this
+    # Note: Real implementations would use sparse data structures (see Chapter 15)
     return Multivector3D(
         scalar=scalar,
         vector=(0, 0, 0),  # No grade-1 part for vector product
@@ -278,7 +279,7 @@ When you compose motors through multiplication, information flows through withou
 
 #### The Power of Preservation
 
-We've discovered that the geometric product's structure isn't arbitrary—it's the unique minimal solution to preserving geometric information. This principle explains:
+The geometric product's structure is not arbitrary—it represents a unique and minimal solution to preserving geometric information. This principle explains:
 
 - Why complex numbers and quaternions are so effective (they're information-preserving subalgebras)
 - Why traditional approaches fragment (each uses lossy projections)
