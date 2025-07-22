@@ -1,6 +1,6 @@
 ### Chapter 14: The Geometric Universe: Foundations and Philosophy
 
-A quantum physicist calculating entanglement entropy notices something curious—their formulas bear an uncanny resemblance to a roboticist's equations for mechanism mobility. A crystallographer's symmetry operations match a graphics programmer's reflection code almost line for line. A topologist studying fiber bundle connections finds themselves writing expressions that look remarkably close to an engineer's motor interpolations. These parallels span fields that evolved independently across centuries, yet they converge on strikingly similar mathematical structures.
+These harsh constraints of physical computation—the relentless demands for sparsity, uncertainty quantification, and raw speed—force us to question why geometric patterns appear so persistently across mathematics and physics despite their computational challenges. A quantum physicist calculating entanglement entropy notices something curious—their formulas bear an uncanny resemblance to a roboticist's equations for mechanism mobility. A crystallographer's symmetry operations match a graphics programmer's reflection code almost line for line. A topologist studying fiber bundle connections finds themselves writing expressions that look remarkably close to an engineer's motor interpolations. These parallels span fields that evolved independently across centuries, yet they converge on strikingly similar mathematical structures.
 
 These aren't forced analogies or notational coincidences. They represent a pattern worth investigating: the recurring appearance of geometric algebra's structures throughout mathematics and physics. This chapter explores what these patterns might mean—not as proof of GA's cosmic fundamentality, but as intriguing phenomena that raise questions about the nature of mathematics, its relationship to physical reality, and why certain mathematical structures seem to resonate across disparate domains.
 
@@ -96,7 +96,7 @@ Mental rotation experiments consistently show that humans process rotations in w
 
 Educational research indicates that students learning GA often report "breakthrough" moments where spatial relationships suddenly clarify. Concepts that seemed abstract in matrix form—like why quaternion multiplication doesn't commute—become intuitive when seen as geometric operations. This suggests GA might tap into existing cognitive structures for spatial reasoning.
 
-Expert geometers frequently describe their thought processes in terms remarkably similar to GA operations—even those who've never studied GA formally. They talk about "sandwiching" objects between transformations or "extending" lower-dimensional objects to higher ones. This convergence is intriguing.
+Published accounts from expert geometers frequently describe their thought processes in terms remarkably similar to GA operations—even those who've never studied GA formally. They talk about "sandwiching" objects between transformations or "extending" lower-dimensional objects to higher ones. This convergence is intriguing.
 
 **Possible Explanations**
 
@@ -239,7 +239,7 @@ Intellectual honesty requires engaging seriously with GA's limitations and criti
 
 *Response*: This is a penetrating and accurate criticism. While GA can model physical systems that have entropic properties, the concept of entropy itself—and related information measures—don't emerge naturally from the geometric product or multivector structure. This absence is particularly striking given information theory's growing importance in physics, from black hole thermodynamics to quantum information.
 
-This gap suggests that a complete description of reality might require synthesis of both geometric and information-theoretic principles. GA provides half the story—the geometric structure of physical laws—but may need augmentation with information-theoretic concepts to capture the full picture. Current research exploring connections between geometric and information theories (like information geometry) might eventually bridge this gap, but presently it represents a genuine limitation of the framework.
+This gap suggests that a complete description of reality might require synthesis of both geometric and information-theoretic principles. GA provides half the story—the geometric structure of physical laws—but fundamentally cannot capture the information-theoretic aspects that may be equally essential. Current research exploring connections between geometric and information theories (like information geometry) might eventually bridge this gap, but presently it represents a genuine paradigm boundary, not merely a technical limitation.
 
 The absence of native information-theoretic concepts in GA might reflect a deeper truth: geometry and information could be complementary aspects of reality, each capturing features the other misses. Just as wave-particle duality required accepting complementary descriptions, a complete physics might require both geometric and informational perspectives.
 
