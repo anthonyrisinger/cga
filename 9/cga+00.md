@@ -4,7 +4,7 @@
 
 ---
 
-## A Practitioner's Guide to Reading This Book
+## A Realist's Guide to Reading This Book
 
 Every geometric computation system eventually faces the same architectural challenge. You're building a robotics controller that needs quaternions for smooth orientation interpolation, matrices for coordinate transforms, and vector algebra for dynamics. Or you're developing a physics engine where collision detection uses Plücker coordinates, rigid body motion needs dual quaternions, and constraints require careful synchronization between position vectors and orientation representations. Each mathematical tool excels in its domain—quaternions elegantly handle 3D rotations without gimbal lock, matrices efficiently batch transform vertices, vector calculus naturally expresses fields and flows. Yet the coordination overhead between these representations creates genuine engineering friction.
 
