@@ -1,5 +1,7 @@
 ### Chapter 6: The Versor Mechanism: A Unified Theory of Motion
 
+In Chapter 5, we established the concrete data structures of conformal geometry—points lifted onto null cones, spheres encoded as vectors, lines and circles sharing algebraic form. These static representations demand dynamic counterparts. How do we transform these objects? What operations preserve their geometric relationships while maintaining the architectural unity we've carefully constructed?
+
 Traditional approaches to geometric transformations have evolved excellent tools for specific purposes. Matrices provide efficient GPU-accelerated pipelines for computer graphics. Quaternions elegantly parameterize 3D rotations without singularities. Dual quaternions naturally represent screw motions for robotics. Each representation excels within its domain, delivering robust solutions to well-defined problems.
 
 The challenge emerges at the interfaces. When your system needs to compose a rotation (stored as a quaternion) with a translation (stored as a vector) and a scaling operation (stored as a scalar), you're constantly converting between representations. Each conversion introduces potential numerical error and conceptual complexity. A robotics system might maintain quaternions for joint rotations, homogeneous matrices for kinematic chains, and dual quaternions for trajectory interpolation—three different mathematical frameworks that must be carefully synchronized.
@@ -63,7 +65,7 @@ While the double-reflection derivation provides geometric insight, in practice y
 
 Translation resists multiplicative representation in Euclidean space. The operation $\mathbf{x}' = \mathbf{x} + \mathbf{t}$ is inherently additive. Various attempts to make it multiplicative (like homogeneous coordinates) come with limitations.
 
-Conformal space changes this. By embedding Euclidean space in a carefully chosen 5D space, translation becomes another species of rotation—specifically, a rotation in a null plane involving the point at infinity. The translator versor takes the form:
+Conformal space changes this. By embedding Euclidean space in a carefully chosen 5D space, translation becomes another species of rotation—specifically, a rotation in a null plane involving the point at infinity. One can visualize this as a shearing transformation that becomes a straight-line motion when projected back into Euclidean space. The translator versor takes the form:
 
 $$T = \exp\left(-\frac{\mathbf{t}\mathbf{n}_\infty}{2}\right) = 1 - \frac{\mathbf{t}\mathbf{n}_\infty}{2}$$
 
@@ -117,7 +119,7 @@ def construct_rotor(axis_bivector, angle):
     """Constructs a rotor from rotation axis and angle.
 
     Note: axis_bivector should be normalized before use.
-    Cost: ~10 floating point operations
+    Cost: Approximately 10 floating point operations (algorithmic estimate)
     """
     # Ensure the bivector is normalized for rotation plane
     B_squared = -geometric_product(axis_bivector, axis_bivector)
@@ -135,7 +137,7 @@ def construct_rotor(axis_bivector, angle):
 def construct_translator(displacement_vector):
     """Constructs a translator from Euclidean displacement.
 
-    Cost: ~5 floating point operations
+    Cost: Approximately 5 floating point operations (algorithmic estimate)
     Note: Much cheaper than rotation, but requires conformal embedding
     """
     # Build translator from Euclidean displacement
@@ -148,7 +150,8 @@ def construct_motor(translation, rotation_bivector, angle):
     """Constructs a motor combining rotation and translation.
 
     Motor = Translation × Rotation (order matters!)
-    Cost: ~20 operations for construction, ~30 for each application
+    Cost: Approximately 20 operations for construction, 30 for each application
+    (algorithmic estimates based on operation counts)
     """
     # First construct individual versors
     T = construct_translator(translation)
@@ -177,7 +180,8 @@ def compose_motors(motor_list):
     """Composes a sequence of motors into a single transformation.
 
     Cost: O(n) geometric products where n = len(motor_list)
-    Each product costs ~30-50 operations for typical motors
+    Each product costs approximately 30-50 operations for typical motors
+    (algorithmic estimate)
     """
     # Motors compose through multiplication
     # Apply in order: M_total = M_n * ... * M_2 * M_1
@@ -196,7 +200,8 @@ def apply_motor(motor, geometric_object):
     """Applies a motor transformation via sandwich product.
 
     Universal operation for any geometric object.
-    Cost: 2 geometric products (~60-100 operations total)
+    Cost: 2 geometric products (approximately 60-100 operations total,
+    algorithmic estimate)
     """
     # Compute the reverse (inverse for normalized versors)
     motor_reverse = reverse(motor)
@@ -240,13 +245,13 @@ Translating then rotating produces a different result than rotating then transla
 | Scaling $D$ | Rotation $R$ | Scaled rotation | Yes: $DR = RD$ | Scaling from origin commutes |
 | Motor $M_1$ | Motor $M_2$ | Motor | Generally no | Complex screw composition |
 
-#### Numerical Stability and Computational Excellence
+#### Numerical Stability and Computational Properties
 
-The versor representation offers genuine numerical advantages, though we shouldn't overstate them. Traditional rotation matrices drift from orthogonality through floating-point error. Quaternions require constant renormalization. Versors maintain their constraints naturally to first order—meaning small numerical errors produce changes proportional to the error magnitude rather than catastrophic constraint violation, though accumulation still requires periodic correction.
+The versor representation offers genuine numerical advantages, though we shouldn't overstate them. Traditional rotation matrices drift from orthogonality through floating-point error. Quaternions require constant renormalization. Versors maintain their constraints naturally to first order—meaning small numerical errors produce changes proportional to the error magnitude rather than catastrophic constraint violation. In practical terms, a small perturbation to a versor produces a slightly non-unit versor rather than a severely non-orthogonal matrix, though accumulation still requires periodic correction.
 
 A rotor satisfies $R\tilde{R} = 1$. Small perturbations preserve this constraint better than matrix orthogonality. When drift does occur, renormalization is simple:
 
-$$R_{\text{normalized}} = \frac{R}{\sqrt{R\tilde{R}}}$$
+$$R_{\text{normalized}} = \frac{R}{\sqrt{\langle R\tilde{R} \rangle_0}}$$
 
 This is computationally simpler than Gram-Schmidt orthogonalization. However, versors still require periodic renormalization in long computations—they're not immune to floating-point reality.
 
@@ -265,7 +270,7 @@ def sandwich_product(versor, object):
     """Applies versor transformation via sandwich product.
 
     Optimized implementation with special case handling.
-    Cost varies by object type: 20-100 operations
+    Cost varies by object type: 20-100 operations (algorithmic estimate)
     """
     # Check for identity transformation
     if is_scalar(versor) and abs(versor - 1.0) < EPSILON:
@@ -277,7 +282,7 @@ def sandwich_product(versor, object):
     # Special case optimizations
     if is_rotor(versor) and is_vector(object):
         # Optimized path for rotating vectors
-        # Saves ~30% over general case
+        # Saves approximately 30% over general case
         return rotor_vector_sandwich_optimized(versor, object, versor_reverse)
 
     if is_translator(versor) and is_point(object):
