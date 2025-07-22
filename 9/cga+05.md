@@ -1,8 +1,8 @@
 ### Chapter 5: The Conformal Representation: A Deterministic Geometric Model
 
-This chapter's goal is straightforward: we'll show how to embed 3D Euclidean objects into 5D conformal space to enable unified geometric computations. This embedding trades memory overhead—5 floats per point instead of 3—for computational uniformity. It's a worthwhile tradeoff when your system handles diverse geometric operations, though not always optimal for specialized tasks. It is critical to note from the outset that the model presented here is deterministic; it provides a powerful language for precise geometric configurations. The significant challenge of representing probabilistic uncertainty will be addressed once this foundational model is established.
+This chapter's goal is straightforward: it shows how to embed 3D Euclidean objects into 5D conformal space to enable unified geometric computations. This embedding trades memory overhead—5 floats per point instead of 3—for computational uniformity. It's a worthwhile trade-off when your system handles diverse geometric operations, though not always optimal for specialized tasks. It is critical to note from the outset that the model presented here is deterministic; it provides a powerful language for precise geometric configurations. The significant challenge of representing probabilistic uncertainty will be addressed once this foundational model is established.
 
-The embedding we'll explore linearizes distance relationships by lifting points onto a carefully chosen surface in higher dimensions. This isn't mysticism; it's a concrete technique that transforms nonlinear distance calculations into linear inner products, enabling architectural simplifications that often justify the overhead.
+The embedding explored here linearizes distance relationships by lifting points onto a carefully chosen surface in higher dimensions. This isn't mysticism; it's a concrete technique that transforms nonlinear distance calculations into linear inner products, enabling architectural simplifications that often justify the overhead.
 
 #### The Conformal Embedding
 
@@ -35,7 +35,7 @@ This confirms our embedding design. Every Euclidean point maps to a null vector,
 
 #### Distance Encoding
 
-The key computational advantage appears when we compute inner products between conformal points:
+The key computational advantage appears when computing inner products between conformal points:
 
 $$P_1 \cdot P_2 = \left(\mathbf{p}_1 + \frac{1}{2}\mathbf{p}_1^2\mathbf{n}_\infty + \mathbf{n}_0\right) \cdot \left(\mathbf{p}_2 + \frac{1}{2}\mathbf{p}_2^2\mathbf{n}_\infty + \mathbf{n}_0\right)$$
 
@@ -114,7 +114,7 @@ Every geometric relationship reduces to an inner product computation. This unifo
 
 #### Computational Implications
 
-Let's be honest about the tradeoffs in adopting conformal representation:
+Let's be honest about the trade-offs in adopting conformal representation:
 
 **Table 20: Dimension and Grade Analysis**
 
@@ -170,7 +170,7 @@ The intersection of this paraboloid with the null cone constraint creates a 3D s
 
 When implementing the conformal model, several practical issues require attention:
 
-1. **Normalization**: Conformal points can be scaled by any non-zero factor. Sometimes we normalize so that $P \cdot \mathbf{n}_\infty = -1$.
+1. **Normalization**: Conformal points can be scaled by any non-zero factor. Sometimes normalizing so that $P \cdot \mathbf{n}_\infty = -1$ is useful.
 
 2. **Numerical Precision**: The $\mathbf{p}^2$ term grows quadratically with distance from origin. For points far from origin, this can cause precision issues. Production implementations often work in bounded domains or use periodic renormalization.
 
@@ -242,9 +242,9 @@ When implementing the conformal model, several practical issues require attentio
 
 #### The Unification Achieved
 
-We've successfully embedded Euclidean geometry into conformal space. Points, lines, planes, circles, and spheres all become elements of our 5D geometric algebra. Their relationships encode as inner products. The representation unifies previously distinct object types—spheres and planes share the same grade, circles and lines become indistinguishable in their algebraic structure.
+The embedding of Euclidean geometry into conformal space is now complete. Points, lines, planes, circles, and spheres all become elements of our 5D geometric algebra. Their relationships encode as inner products. The representation unifies previously distinct object types—spheres and planes share the same grade, circles and lines become indistinguishable in their algebraic structure.
 
-This unification comes with clear tradeoffs. We use more memory per object. Individual operations may require more floating-point calculations than specialized methods. The $\mathbf{p}^2$ term can cause numerical issues for distant points. Most critically, we've gained no native capability for representing uncertainty—every geometric object remains deterministically precise. These are the costs of uniformity.
+This unification comes with clear trade-offs. We use more memory per object. Individual operations may require more floating-point calculations than specialized methods. The $\mathbf{p}^2$ term can cause numerical issues for distant points. Most critically, there is no native capability for representing uncertainty—every geometric object remains deterministically precise. These are the costs of uniformity.
 
 The benefits appear at the architectural level. One type system handles all geometric objects. One set of operations works universally. Complex transformation chains simplify dramatically. For applications involving diverse geometric computations—CAD systems, robotics, physics simulations—the elegance and uniformity often justify the overhead. For specialized, performance-critical applications, traditional methods may remain preferable.
 
