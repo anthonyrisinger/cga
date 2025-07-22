@@ -8093,7 +8093,7 @@ Before committing to a GA architecture, consider these factors:
 **Performance Requirements**
 | Operation Type | GA Performance | When Acceptable |
 |----------------|----------------|-----------------|
-| Tight loops (&lt;1ms) | 1.5-3× slower | If you have headroom |
+| Tight loops (under 1ms) | 1.5-3× slower | If you have headroom |
 | Memory-constrained | 1.3-2× more memory | Desktop/server apps |
 | Battery-powered | More computation = more power | Plugged-in systems |
 | Real-time | Predictable but slower | Soft real-time OK |
