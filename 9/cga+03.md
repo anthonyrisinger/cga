@@ -65,8 +65,6 @@ $$\mathbf{v}' = -\mathbf{nvn}$$
 
 where $\mathbf{n}$ is a unit vector defining the mirror. The geometric products $\mathbf{nv}$ and $\mathbf{vn}$ preserve all information needed to complete the reflection.
 
-This is the "aha!" moment for an engineer: the structure of the geometric product isn't arbitrary or mystical. It's forced by the requirement of information preservation. Just as Shannon's information theory shows that lossless compression has theoretical limits, the geometric product represents the minimal algebraic structure needed to preserve geometric information.
-
 #### Immediate Validation: Complex Numbers Fall Out
 
 If our information-preservation principle is correct, it should reveal why certain algebras are so effective for geometric computation. Let's test it in two dimensions.
