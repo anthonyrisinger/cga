@@ -62,7 +62,7 @@ Matrix3x3 transform_inertia(Matrix3x3 I_body, Matrix3x3 R) {
 GA approach:
 ```python
 def transform_inertia_ga(I_body, motor):
-    # Transform inertia using versor mechanism
+    """Transform inertia operator using versor conjugation."""
     # I_world(ω) = M * I_body(M̃ * ω * M) * M̃
     # Cost: ~80 operations but more numerically stable
     return lambda omega: sandwich(motor, I_body(sandwich(reverse(motor), omega)))
@@ -77,8 +77,8 @@ Structure INERTIA_OPERATOR:
     I_xx, I_yy, I_zz: Scalar
     I_xy, I_xz, I_yz: Scalar  # Products of inertia
 
-    Function Apply(omega_bivector):
-        # Map velocity bivector to momentum bivector
+    Function Apply(omega_bivector: Bivector) -> Bivector:
+        """Map angular velocity bivector to angular momentum bivector."""
         # Extract components (same complexity as matrix multiply)
         omega_xy = omega_bivector · e_xy
         omega_xz = omega_bivector · e_xz
@@ -100,12 +100,12 @@ Structure INERTIA_OPERATOR:
 
 **GA Alternative:** The meet operation provides a single algorithm for all shape pairs, but at a cost:
 
-| Shape Pair | Traditional (FLOPs) | GA Meet (FLOPs) | Ratio | When GA Wins |
-|------------|--------------------:|----------------:|------:|--------------|
-| Sphere-Sphere | 10 | 50 | 5× | Never on speed alone |
-| Box-Box (SAT) | 150 | 300 | 2× | Complex constraint scenarios |
-| Sphere-Mesh | 200 per triangle | 150 per triangle | 0.75× | Sometimes faster! |
-| Arbitrary-Arbitrary | Not available | 200-400 | N/A | Only option |
+| Shape Pair | Traditional (FLOPs) | GA Meet (FLOPs) | Ratio | Primary Domain |
+|------------|--------------------:|----------------:|------:|----------------|
+| Sphere-Sphere | 10 | 50 | 5× | Traditional speed |
+| Box-Box (SAT) | 150 | 300 | 2× | Traditional usually |
+| Sphere-Mesh | 200 per triangle | 150 per triangle | 0.75× | GA sometimes |
+| Arbitrary-Arbitrary | Not available | 200-400 | N/A | GA only option |
 
 The meet operation's universality shines when you need to handle arbitrary shape combinations or when adding new shape types. Instead of implementing O(n²) algorithms for n shape types, you implement one.
 
@@ -115,7 +115,7 @@ Algorithm: Collision Detection with Performance Awareness
 Input: Bodies A and B with shapes and poses
 Output: Contact information or null
 
-Procedure DETECT_COLLISION(A, B):
+Procedure DETECT_COLLISION(A: RigidBody, B: RigidBody):
     # Early rejection using bounding volumes (same as traditional)
     If not bounding_volumes_overlap(A, B):
         Return NO_COLLISION
@@ -150,7 +150,7 @@ The GA approach trades memory and per-operation speed for dramatic code simplifi
 
 ##### Core Mechanic 3: Geometric Constraint Solving
 
-**Traditional Approach:** Constraints are typically handled as scalar equations with Lagrange multipliers or sequential impulses. This works well and is the basis for most production physics engines. A ball joint maintains |p₁ - p₂| = 0 through careful force calculation.
+**Traditional Approach:** Constraints are typically handled as scalar equations with Lagrange multipliers or sequential impulses. This works well and is the basis for most production physics engines. A ball joint maintains $|\mathbf{p}_1 - \mathbf{p}_2| = 0$ through careful force calculation.
 
 **GA Perspective:** Constraints maintain geometric relationships. The error isn't just a scalar—it's a geometric object with direction and magnitude.
 
@@ -167,7 +167,8 @@ The GA formulation often converges faster because it preserves the geometric str
 
 **Implementation Blueprint:**
 ```python
-Procedure SOLVE_CONSTRAINTS(bodies, constraints, dt):
+Procedure SOLVE_CONSTRAINTS(bodies: List[RigidBody], constraints: List[Constraint], dt: Scalar):
+    """Iterative constraint solver preserving geometric structure."""
     # Performance note: GA version typically needs 30% fewer iterations
     # but each iteration costs 30% more - often breaks even
 
@@ -224,7 +225,8 @@ Algorithm: Geometric Symplectic Integration
 Input: Body state, wrench, timestep dt
 Output: Updated body state
 
-Procedure INTEGRATE_RIGID_BODY(body, wrench, dt):
+Procedure INTEGRATE_RIGID_BODY(body: RigidBody, wrench: Bivector, dt: Scalar):
+    """Structure-preserving integration on SE(3) manifold."""
     # Update momentum (same as traditional)
     body.momentum = body.momentum + wrench * dt
 
@@ -311,13 +313,15 @@ The feature representation overhead is significant. GA makes sense when features
 
 ```python
 # Traditional projection: ~15 FLOPs
-def project_traditional(K, R, t, point_3d):
+def project_traditional(K: Matrix3x3, R: Matrix3x3, t: Vector3, point_3d: Vector3) -> Vector2:
+    """Standard pinhole projection."""
     p_cam = R @ point_3d + t
     p_img = K @ p_cam
     return p_img[0:2] / p_img[2]
 
 # GA projection: ~50 FLOPs
-def project_ga(camera_motor, image_plane, world_point):
+def project_ga(camera_motor: Motor, image_plane: Plane, world_point: Point) -> Point2D:
+    """Unified projection for any camera model."""
     # Transform to camera space
     point_cam = sandwich(inverse(camera_motor), world_point)
 
@@ -364,7 +368,8 @@ Architecture: Hybrid Visual SLAM System
 Component 1: GA-BASED GEOMETRIC FRONT-END
     Purpose: Robust geometric operations
 
-    Function PROCESS_NEW_FRAME(image, current_pose_motor):
+    Function PROCESS_NEW_FRAME(image: Image, current_pose_motor: Motor) -> Tuple[Motor, List[Point]]:
+        """Process image geometrically using GA."""
         features = detect_features(image)
 
         # GA excels at geometric reasoning
@@ -388,19 +393,19 @@ Component 1: GA-BASED GEOMETRIC FRONT-END
 Component 2: INTERFACE LAYER
     Purpose: Bidirectional conversion GA ↔ Traditional
 
-    Function MOTOR_TO_STATE_VECTOR(motor):
-        # Extract 6-DOF parameterization for optimizer
+    Function MOTOR_TO_STATE_VECTOR(motor: Motor) -> Vector6:
+        """Extract 6-DOF parameterization for optimizer."""
         R, t = decompose_motor(motor)
         return concatenate([t, log_SO3(R)])  # 6×1 vector
 
-    Function STATE_VECTOR_TO_MOTOR(state):
-        # Reconstruct motor from optimization result
+    Function STATE_VECTOR_TO_MOTOR(state: Vector6) -> Motor:
+        """Reconstruct motor from optimization result."""
         t = state[0:3]
         R = exp_SO3(state[3:6])
         return construct_motor(R, t)
 
-    Function LANDMARKS_TO_VECTORS(ga_landmarks):
-        # Convert conformal points to 3D vectors
+    Function LANDMARKS_TO_VECTORS(ga_landmarks: List[Point]) -> List[Vector3]:
+        """Convert conformal points to 3D vectors."""
         vectors = []
         For each landmark in ga_landmarks:
             vec3 = extract_euclidean_point(landmark)
@@ -410,7 +415,9 @@ Component 2: INTERFACE LAYER
 Component 3: TRADITIONAL PROBABILISTIC BACKEND
     Purpose: Large-scale optimization
 
-    Function OPTIMIZE_MAP(poses, landmarks, observations):
+    Function OPTIMIZE_MAP(poses: List[Vector6], landmarks: List[Vector3],
+                         observations: List[Observation]) -> Tuple[List[Vector6], List[Vector3]]:
+        """Sparse bundle adjustment using factor graphs."""
         # Build factor graph using traditional representations
         graph = FactorGraph()
 
@@ -463,26 +470,14 @@ Main Pipeline:
 
 **The Real Win:** Traditional bundle adjustment struggles with rotation parameterization. Euler angles have singularities. Quaternions need constraints. Rotation matrices have 9 parameters for 3 DOF.
 
-Motors provide a singularity-free parameterization with natural manifold structure:
+Motors provide a singularity-free parameterization with natural manifold structure. Analysis shows that motors offer better local parameterization properties than traditional approaches, particularly near singularities. The geometric structure provides natural regularization that can improve convergence on small, dense problems.
 
-**Convergence Comparison (on synthetic data):**
-| Method | Iterations | Time/Iteration | Total Time | Final Error |
-|--------|------------|----------------|------------|-------------|
-| Euler + Translation | 45 | 0.8ms | 36ms | 1.2e-3 |
-| Quaternion + Translation | 28 | 1.0ms | 28ms | 8.1e-4 |
-| Rotation Matrix | 32 | 1.2ms | 38ms | 8.3e-4 |
-| Motors (GA) | 22 | 1.3ms | 29ms | 7.9e-4 |
+However, this theoretical advantage is completely overshadowed in practice by the necessity of sparse solvers for large-scale problems. When a bundle adjustment problem involves thousands of cameras and millions of points, the ability to exploit sparsity provides performance improvements of several orders of magnitude that dwarf any benefits from better parameterization.
 
-Motors converge faster due to better conditioning, offsetting the higher per-iteration cost. The real advantage: no special handling for singularities or constraints.
-
-But this comparison uses small synthetic problems. Real bundle adjustment involves thousands of cameras and millions of points. Here, sparse matrix structure dominates everything else:
-
-**Real-World Performance (1000 cameras, 10K points):**
-- Traditional with sparsity (Ceres): 2.1 seconds
-- GA without sparsity: 45 seconds
-- Hybrid (GA parameterization + sparse solver): 2.3 seconds
-
-The hybrid approach uses motors for parameterization but converts to sparse matrices for solving.
+**Practical Reality:**
+- For small problems (< 100 cameras), motors may converge in fewer iterations due to better conditioning
+- For production-scale problems (> 1000 cameras), sparse solvers dominate everything else
+- The hybrid approach—using motors for parameterization but converting to sparse matrices for solving—provides the best of both worlds
 
 ##### Core Mechanic 3: Uncertainty Propagation
 
@@ -491,13 +486,13 @@ The hybrid approach uses motors for parameterization but converts to sparse matr
 **GA Approach:** Uncertainty as geometric objects (bivectors) that transform naturally:
 
 ```python
-def propagate_uncertainty_traditional(cov_2d, projection_jacobian):
-    # Complex chain rule for covariance
+def propagate_uncertainty_traditional(cov_2d: Matrix2x2, projection_jacobian: Matrix2x3) -> Matrix3x3:
+    """Complex chain rule for covariance."""
     # cov_3d = J^T * cov_2d * J
     return projection_jacobian.T @ cov_2d @ projection_jacobian
 
-def propagate_uncertainty_ga(uncertainty_bivector, camera_motor):
-    # Uncertainty transforms like any geometric object
+def propagate_uncertainty_ga(uncertainty_bivector: Bivector, camera_motor: Motor) -> Bivector:
+    """Uncertainty transforms like any geometric object."""
     # Same sandwich product as points/lines/planes
     return sandwich(camera_motor, uncertainty_bivector)
 ```
@@ -533,7 +528,7 @@ However, this only handles geometric uncertainty. For full probabilistic inferen
 
 ##### Industrial Reality
 
-Most industrial robots run beautifully with traditional DH parameters and joint-space control. These methods are proven, efficient, and well-understood. Companies like KUKA, ABB, and Fanuc have built empires on these approaches. Any alternative must offer compelling advantages.
+Most industrial robots run beautifully with traditional Denavit-Hartenberg parameters and joint-space control. These methods are proven, efficient, and well-understood. Companies like KUKA, ABB, and Fanuc have built empires on these approaches. Any alternative must offer compelling advantages.
 
 GA-based robotics excels in specific scenarios:
 - Redundant manipulators (7+ DOF)
@@ -545,14 +540,14 @@ For a standard 6-DOF industrial arm doing pick-and-place, traditional methods ar
 
 ##### Comparison Table: Kinematics Approaches
 
-| Aspect | DH Parameters | Quaternion+Vector | Motors (GA) | Winner |
-|--------|---------------|-------------------|-------------|---------|
-| Memory per joint | 4 floats | 7 floats | 8 floats | DH |
-| Forward kinematics | 16 muls/joint | 30 muls/joint | 28 muls/joint | DH |
-| Inverse kinematics | Analytical possible | Iterative | Iterative | DH for 6DOF |
-| Singularity handling | Manual detection | Gimbal lock | Natural | GA |
-| Trajectory smoothness | Joint interpolation | Separate R,t | Unified screw | GA |
-| Industry support | Excellent | Good | Minimal | Traditional |
+| Aspect | DH Parameters | Quaternion+Vector | Motors (GA) | Primary Domain |
+|--------|---------------|-------------------|-------------|----------------|
+| Memory per joint | 4 floats | 7 floats | 8 floats | DH for efficiency |
+| Forward kinematics | 16 muls/joint | 30 muls/joint | 28 muls/joint | DH for speed |
+| Inverse kinematics | Analytical possible | Iterative | Iterative | DH for closed-form |
+| Singularity handling | Manual detection | Gimbal lock | Natural | GA for robustness |
+| Trajectory smoothness | Joint interpolation | Separate R,t | Unified screw | GA for quality |
+| Industry support | Excellent | Good | Minimal | Traditional ecosystem |
 
 ##### Core Mechanic 1: The Geometric Jacobian
 
@@ -562,13 +557,15 @@ For a standard 6-DOF industrial arm doing pick-and-place, traditional methods ar
 
 ```python
 # Traditional: 6D velocity vector
-def jacobian_traditional(joint_positions):
+def jacobian_traditional(joint_positions: List[float]) -> Matrix6xN:
+    """Compute manipulator Jacobian matrix."""
     J = zeros((6, n_joints))  # 6×n matrix
     # ... complex frame calculations ...
     return J
 
 # GA: List of bivectors
-def jacobian_geometric(joint_motors):
+def jacobian_geometric(joint_motors: List[Motor]) -> List[Bivector]:
+    """Compute Jacobian as screw generators."""
     jacobian_bivectors = []
 
     M_cumulative = identity_motor()
@@ -596,7 +593,9 @@ def jacobian_geometric(joint_motors):
 
 ```python
 # Traditional: Separate position and orientation control
-def traditional_control(x_desired, R_desired, x_current, R_current):
+def traditional_control(x_desired: Vector3, R_desired: Matrix3x3,
+                       x_current: Vector3, R_current: Matrix3x3) -> Vector6:
+    """Compute workspace control wrench."""
     # Position error
     e_pos = x_desired - x_current
 
@@ -611,9 +610,11 @@ def traditional_control(x_desired, R_desired, x_current, R_current):
 
     # Control law
     wrench = Kp @ error + Kd @ velocity_error
+    return wrench
 
 # GA: Unified geometric error
-def geometric_control(M_desired, M_current):
+def geometric_control(M_desired: Motor, M_current: Motor) -> Bivector:
+    """Compute control wrench preserving screw geometry."""
     # Single geometric error
     M_error = M_desired * inverse(M_current)
 
@@ -624,6 +625,8 @@ def geometric_control(M_desired, M_current):
     # Can even have different stiffness in different directions
     wrench = apply_stiffness_bivector(K_geometric, error_screw) - \
              apply_damping_bivector(D_geometric, velocity_bivector)
+
+    return wrench
 ```
 
 The GA version is more elegant and handles screw motions naturally. Performance is comparable (within 20%), but the code is clearer and less prone to singularities.
@@ -641,7 +644,8 @@ The control approaches presented above are deterministic. They assume perfect st
 **Example Limitation:**
 ```python
 # Traditional probabilistic control
-def belief_space_planner(belief_state, goal):
+def belief_space_planner(belief_state: GaussianBelief, goal: State) -> Trajectory:
+    """Plan considering state uncertainty."""
     # belief_state contains mean and covariance
     # Can use EKF, particle filter, etc.
 
@@ -655,6 +659,8 @@ def belief_space_planner(belief_state, goal):
 
         # Compute information gain
         info_gain = compute_information_gain(belief_state, sensor_model)
+
+    return trajectory
 
 # GA cannot naturally express this
 # Motors have no uncertainty representation
@@ -683,23 +689,15 @@ For robots operating under uncertainty—which includes most real-world systems�
 - **Learning-based control (neural networks expect vectors)**
 
 **Performance Reality:**
-```python
-# Benchmark results on 7-DOF robot, 1kHz control loop
-# Traditional:
-#   - Forward kinematics: 45 μs
-#   - Jacobian: 78 μs
-#   - IK iteration: 156 μs
-#   - Total per cycle: ~450 μs (plenty of headroom)
-#
-# GA-based:
-#   - Forward kinematics: 52 μs (15% slower)
-#   - Jacobian: 89 μs (14% slower)
-#   - IK iteration: 134 μs (14% faster due to better conditioning)
-#   - Total per cycle: ~470 μs (still fine for 1kHz)
-#
-# The GA version uses 20% more memory but eliminates several
-# classes of singularity-related failures.
-```
+
+Algorithmic analysis shows that GA-based kinematics has comparable per-iteration computational costs to traditional methods. The key differentiator is not raw speed but the deterministic nature of the approach:
+
+- Forward kinematics: ~15% slower due to motor operations
+- Jacobian computation: Similar complexity, different representation
+- Inverse kinematics: Often converges in fewer iterations due to better singularity handling
+- Memory usage: 20% higher but eliminates several failure modes
+
+The real limitation is the inability to naturally handle uncertainty, which is increasingly central to modern robotics. While GA provides elegant deterministic control, production systems require probabilistic state estimation, belief-space planning, and robust handling of sensor noise—all areas where traditional vector representations interface naturally with established probabilistic frameworks.
 
 #### When to Choose a GA-Based Architecture
 
@@ -742,22 +740,20 @@ Before committing to a GA architecture, consider these factors:
 - Debugging tools: Basic for GA, excellent for traditional
 - Stack Overflow answers: 100:1 ratio favoring traditional
 
-**Decision Matrix:**
-```
-Score each factor 1-5 (5 favors GA):
-- [ ] Mixed geometric primitives (1=few, 5=many)
-- [ ] Coordinate-free valuable (1=no, 5=critical)
-- [ ] Team learning capacity (1=low, 5=high)
-- [ ] Performance headroom (1=none, 5=plenty)
-- [ ] Research vs production (1=production, 5=research)
-- [ ] Architectural simplicity valued (1=no, 5=highly)
-- [ ] Need for probabilistic inference (1=critical, 5=none)
-- [ ] Problem sparsity (1=very sparse, 5=dense)
+**Heuristic Guide for Architectural Assessment:**
 
-Total > 24: Consider GA seriously
-Total 16-24: Prototype both approaches
-Total < 16: Traditional likely better
-```
+When evaluating whether GA is appropriate for your system, consider these factors as a qualitative assessment framework:
+
+- **Mixed geometric primitives**: How many different geometric types (points, lines, planes, spheres) must interact? Higher diversity favors GA.
+- **Coordinate-free value**: How important is avoiding coordinate system artifacts and singularities? Critical applications favor GA.
+- **Team learning capacity**: Can your team invest 3-6 months in learning a new framework? Limited time favors traditional.
+- **Performance headroom**: Do you have 2-3× computational budget to spare? Tight constraints favor traditional.
+- **Research vs production**: Are you exploring new algorithms or deploying proven solutions? Research favors GA.
+- **Architectural simplicity**: How much do you value unified operations over special cases? High value favors GA.
+- **Probabilistic inference needs**: Does your system require uncertainty quantification? Critical needs strongly favor traditional.
+- **Problem sparsity**: Can you exploit sparse matrix structure for massive speedups? High sparsity strongly favor traditional.
+
+This assessment helps identify whether GA's architectural benefits justify its computational costs for your specific application.
 
 #### Universal Architectural Principles
 
@@ -779,13 +775,13 @@ The unification reduces synchronization bugs between components, though it doesn
 
 Three operations form a geometric "instruction set" used across domains. These handle many common cases, though specialized algorithms remain faster for specific situations:
 
-**The Versor Mechanism (VXV⁻¹)**: General transformation
+**The Versor Mechanism ($VXV^{-1}$)**: General transformation
 - Handles most transformations uniformly
 - ~2-3× slower than specialized matrix operations
 - Eliminates special case code
 - Natural composition without matrix multiplication
 
-**The Meet Operation (A ∨ B)**: General intersection
+**The Meet Operation ($A \vee B$)**: General intersection
 - Works for many shape combinations
 - ~3-5× slower than specialized intersections
 - Single algorithm reduces code complexity
@@ -838,27 +834,28 @@ The highest form of GA-based architecture acknowledges that different mathematic
 
 **The Pattern:**
 ```python
-Class HybridGeometricSystem:
+class HybridGeometricSystem:
+    """Exemplifies pragmatic GA integration."""
     # Internal representation uses GA for consistency
     _state: Motor
     _constraints: List[GeometricConstraint]
 
     # External interface provides traditional types
     def get_pose_matrix(self) -> Matrix4x4:
-        """For rendering and legacy systems"""
+        """For rendering and legacy systems."""
         return motor_to_matrix(self._state)
 
     def get_state_vector(self) -> Vector6:
-        """For optimization libraries"""
+        """For optimization libraries."""
         return motor_to_state_vector(self._state)
 
     def get_uncertainty(self) -> Matrix6x6:
-        """For probabilistic inference"""
+        """For probabilistic inference."""
         # GA has no uncertainty - must track separately
         return self._covariance
 
     def update_from_optimization(self, delta: Vector6):
-        """Accept updates from traditional solver"""
+        """Accept updates from traditional solver."""
         self._state = exp_se3(delta) * self._state
 ```
 
