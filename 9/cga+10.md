@@ -1,6 +1,6 @@
 ### Chapter 10: Robotics and Kinematics: The Motor Algebra
 
-You're debugging a robot arm that's supposed to smoothly move a welding tip along a curved seam. The trajectory looks perfect in simulation, but the physical robot stutters and jerks at seemingly random points. After hours of investigation, you discover multiple culprits: gimbal lock in your Euler angle representation causing a singularity, quaternion interpolation that doesn't properly account for the coupled translation, and transformation matrices accumulating numerical errors that compound with each joint.
+A common scenario in robotics involves debugging a robot arm that exhibits stuttering and jerking motions despite a smooth simulated trajectory. Investigation often reveals multiple culprits: gimbal lock in Euler angle representations causing singularities, quaternion interpolation that inadequately handles coupled translation, and transformation matrices accumulating numerical errors that compound through kinematic chains.
 
 This scenario illustrates genuine engineering challenges in robotics that different mathematical frameworks address with varying degrees of success. Euler angles provide intuitive parameterization but suffer from singularities. Quaternions elegantly handle pure rotation without gimbal lock but can't represent translation. Homogeneous matrices unify transformations but require careful numerical maintenance and obscure the underlying screw motion structure. Dual quaternions handle rigid motions but add conceptual complexity.
 
@@ -361,7 +361,7 @@ def inverse_kinematics_motors(M_desired, q_init, joint_data):
 
 **Key Advantages of Motor Approach:**
 - Unified error representation (no separate position/orientation)
-- Superior geometric insight into singularity structure
+- Geometric insight into singularity structure for classification
 - Natural handling of screw motion constraints
 
 **Key Disadvantages:**
@@ -369,7 +369,7 @@ def inverse_kinematics_motors(M_desired, q_init, joint_data):
 - More complex implementation
 - Less familiar to practitioners
 
-While the geometric formulation is more elegant and avoids representation singularities like gimbal lock, the numerical conditioning of the underlying iterative least-squares problem is often comparable to well-formulated traditional methods. The primary advantage lies not in superior conditioning but in the clearer geometric understanding of the singularity's nature, as we'll see in the next section.
+While the geometric formulation is more elegant and avoids representation singularities like gimbal lock, the numerical conditioning of the underlying iterative least-squares problem is often comparable to well-formulated traditional methods. The primary advantage lies in the clearer geometric understanding of the singularity's nature for classification and avoidance strategies, as we'll see in the next section.
 
 #### Singularity Analysis and Detection
 
@@ -738,17 +738,17 @@ def real_time_motor_controller(robot_params, control_rate=1000):
 
 **Performance Estimates (Order of Magnitude):**
 
-| Operation | Traditional Time | Motor Time | Motor/Traditional Ratio |
-|-----------|-----------------|------------|------------------------|
-| Forward Kinematics (6 DOF) | 10 μs | 30 μs | 3× |
-| Jacobian Computation | 20 μs | 50 μs | 2.5× |
-| IK Iteration | 100 μs | 300 μs | 3× |
-| Full Dynamics | 200 μs | 600 μs | 3× |
-| Interpolation Step | 5 μs | 10 μs | 2× |
+| Operation | Traditional Ratio | Motor Ratio | Motor/Traditional Ratio |
+|-----------|------------------|-------------|------------------------|
+| Forward Kinematics (6 DOF) | Baseline | 3× | 3× |
+| Jacobian Computation | Baseline | 2.5× | 2.5× |
+| IK Iteration | Baseline | 3× | 3× |
+| Full Dynamics | Baseline | 3× | 3× |
+| Interpolation Step | Baseline | 2× | 2× |
 
 #### When to Use Motor-Based Robotics
 
-Based on practical experience and honest assessment of tradeoffs, here's guidance on when motors and geometric algebra offer genuine advantages:
+Based on the tradeoffs analyzed in this chapter, here's guidance on when motors and geometric algebra offer genuine advantages:
 
 **Use Motors/GA When:**
 
@@ -801,7 +801,7 @@ Based on practical experience and honest assessment of tradeoffs, here's guidanc
 
 #### Case Study: Surgical Robot Control
 
-Consider a surgical robot requiring sub-millimeter precision with a remote center of motion (RCM) constraint—a perfect example where motor algebra's benefits justify its costs.
+Consider a *hypothetical* surgical robot requiring sub-millimeter precision with a remote center of motion (RCM) constraint—an illustrative example where motor algebra's benefits justify its costs.
 
 **Requirements:**
 - Tool must pivot through trocar point (RCM)
