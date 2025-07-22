@@ -2,7 +2,7 @@
 
 Computer graphics and computer vision have evolved distinct mathematical toolkits, each refined through decades of research and engineering. Graphics leverages 4×4 matrix pipelines optimized for GPU acceleration, quaternions for smooth rotation interpolation, and specialized shading models tuned for real-time performance. Computer vision employs homogeneous coordinates for projective geometry, Plücker coordinates for spatial reasoning, and manifold optimization techniques for 3D reconstruction. These tools excel within their domains, representing generations of optimization for their specific use cases.
 
-The architectural challenge emerges at the boundaries. Modern systems like visual SLAM, augmented reality, and computational photography must seamlessly integrate both rendering and reconstruction. Consider a visual SLAM system processing sensor data: the rendering pipeline uses 4×4 projection matrices optimized for GPU execution, feature matching operates in 2D image coordinates with subpixel precision, triangulation employs either linear least squares or Plücker coordinates depending on the configuration, and bundle adjustment optimizes over $SO(3) \times \mathbb{R}^3$ using specialized parameterizations to avoid singularities. Each subsystem speaks a different mathematical dialect, requiring careful translation at every interface. Moreover, each component must propagate uncertainty through its computations—a challenge that traditional deterministic frameworks handle through auxiliary covariance matrices and Jacobian-based propagation.
+The architectural challenge emerges at the boundaries. Consider visual SLAM, augmented reality, and computational photography systems that must seamlessly integrate both rendering and reconstruction. A visual SLAM system processing sensor data illustrates the challenge: the rendering pipeline uses 4×4 projection matrices optimized for GPU execution, feature matching operates in 2D image coordinates with subpixel precision, triangulation employs either linear least squares or Plücker coordinates depending on the configuration, and bundle adjustment optimizes over $SO(3) \times \mathbb{R}^3$ using specialized parameterizations to avoid singularities. Each subsystem speaks a different mathematical dialect, requiring careful translation at every interface. Moreover, each component must propagate uncertainty through its computations—a challenge that traditional deterministic frameworks handle through auxiliary covariance matrices and Jacobian-based propagation.
 
 These translations introduce both computational overhead and conceptual friction. Converting between quaternion rotations and rotation matrices for different subsystems adds unnecessary operations. Maintaining consistency between the graphics projection matrix and the computer vision camera model requires careful bookkeeping. The impedance mismatch between rendering's forward projection and vision's inverse reconstruction complicates unified pipelines. Each translation point becomes a potential source of numerical error and architectural complexity.
 
@@ -275,17 +275,12 @@ The motor parameterization provides concrete engineering advantages:
 | Aspect | Quaternion + Translation | Motor (GA) | Advantage |
 |--------|-------------------------|------------|-----------|
 | Parameters | 7 per camera (4+3) | 6 per camera | Minimal parameterization |
-| Constraints | $\|\|q\|\| = 1$ enforced | None needed | Simpler optimization |
+| Constraints | $\|q\| = 1$ enforced | None needed | Simpler optimization |
 | Update | Multiplicative + additive | Pure multiplicative | Geometric consistency |
 | Jacobian | Complex chain rule | Natural in Lie algebra | Simpler derivatives |
 | Implementation | Widely available | Requires GA library | Ecosystem consideration |
 
-Performance comparison on a typical 100-camera, 10,000-point reconstruction:
-- Traditional: ~4-5 seconds per iteration
-- Motor-based: ~5-6 seconds per iteration
-- Motor advantage: 30% fewer iterations to convergence
-
-The motor approach requires ~15% more computation per iteration but converges in significantly fewer iterations due to better conditioning. The net result is comparable or slightly better total runtime with improved numerical stability.
+The motor approach requires approximately 15% more computation per iteration but converges in significantly fewer iterations due to better conditioning. The net result is comparable or slightly better total runtime with improved numerical stability.
 
 ##### Manifold Elegance vs. Sparse Reality
 
@@ -363,12 +358,13 @@ def bridge_to_eigen(ga_transform):
 
 **Performance Profiling**: Real-world performance depends heavily on specific operations and problem structure:
 
-| Operation | Traditional | GA | Ratio | When to Use GA |
-|-----------|------------|-----|-------|----------------|
+| Operation | Traditional Time | Motor Time | Motor/Traditional Ratio | When to Use GA |
+|-----------|-----------------|------------|------------------------|----------------|
 | Project point | 15 ops | 80 ops | 5.3× | Non-planar image surfaces |
 | Ray-triangle test | 40 ops | 200 ops | 5× | Mixed primitive types |
 | Compose transforms | 64 ops | 48 ops | 0.75× | Long transformation chains |
 | Optimize camera | Complex | Natural | ~1× | Always beneficial |
+| Interpolation Step | 5 ops | 10 ops | 2× | Smooth trajectories |
 
 #### When to Adopt GA for Visual Computing
 
@@ -402,7 +398,13 @@ Let's examine a complete visual SLAM pipeline to see where GA provides architect
 
 ```python
 def geometric_visual_slam(image_sequence):
-    """Visual SLAM using geometric algebra throughout."""
+    """Visual SLAM using geometric algebra throughout.
+
+    Illustrative theoretical walkthrough of a pure GA-based pipeline
+    to demonstrate architectural concepts. This approach is not
+    computationally tractable for real-world, large-scale SLAM due
+    to the lack of sparse optimization and uncertainty handling.
+    """
 
     # Initialize with first two frames
     frame0, frame1 = image_sequence[0:2]
