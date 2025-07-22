@@ -4,7 +4,7 @@ Our mathematical tools are complete. Through eleven chapters, we've witnessed ge
 
 What we've built with conformal geometric algebra represents one powerful approach in a systematic framework of geometric computation. The same principles that created CGA can generate algebras tailored to any geometric domain—from the causality of spacetime to the projective geometry of computer vision, from the quadric surfaces of engineering to the exceptional structures of particle physics. Each algebra emerges not through arbitrary construction but through the precise matching of mathematical structure to geometric necessity.
 
-The horizons ahead reveal territories both practical and philosophical. We'll discover how geometric algebra transforms machine learning and quantum computing, explore the philosophical implications of a universe that computes geometrically, and provide the architectural patterns for building systems that harness this power. The journey from weilding one geometric algebra to architecting with many begins now.
+The horizons ahead reveal territories both practical and philosophical. We'll discover how geometric algebra transforms machine learning and quantum computing, explore the philosophical implications of a universe that computes geometrically, and provide the architectural patterns for building systems that harness this power. The journey from wielding one geometric algebra to architecting with many begins now.
 
 ---
 
@@ -27,7 +27,7 @@ However, before choosing among geometric algebras, a more fundamental decision m
 Each signature $(p,q,r)$—where $p$ vectors square to $+1$, $q$ square to $-1$, and $r$ square to $0$—creates an algebra with distinct computational properties. Just as one might use the gamma function to explore the geometry of non-integer dimensions, we must choose the algebraic signature that best fits the dimensionality and metric of our specific problem. The available options include:
 
 - Projective GA $(3,0,1)$: Handles 3D computer vision without metric properties
-- Plane-based GA $(3,0,1)$: Same algebra as PGA but optimized for architectural modeling
+- Plane-based GA $(3,0,1)$: Same algebra as PGA but with basis choices optimized for architectural modeling where planes dominate
 - Spacetime Algebra $(1,3,0)$ or $(3,1,0)$: Encodes relativistic physics, preserves causality
 - Conformal GA $(4,1,0)$: Linearizes 3D Euclidean transformations, unifies rotations and translations
 - Quadric GA $(6,3,0)$: Directly manipulates 3D curved surfaces
@@ -56,7 +56,7 @@ The degenerate metric prevents distance measurement but excels at incidence rela
 
 ##### Advantages Over Traditional Methods
 
-PGA shines when your algorithm is dominated by line operations:
+PGA shines when your algorithm is dominated by line operations. These advantages include:
 - Join and meet operations work directly on lines (grade 2 objects)
 - No special cases for points at infinity—they're just points with $w=0$
 - Projective transformations compose through geometric product
@@ -65,7 +65,7 @@ PGA shines when your algorithm is dominated by line operations:
 
 ##### Computational Costs
 
-Let's be honest about the overhead:
+The overhead is significant:
 - 16-dimensional algebra (vs 4D homogeneous coordinates)
 - Each bivector (line) requires 6 floats (vs 4 for point)
 - Geometric products need ~50-100 operations (vs 16 for matrix multiply)
@@ -99,7 +99,7 @@ def pga_line_from_points(p1, p2):
     return L
 
 def traditional_line_from_points(p1, p2):
-    """Traditional homogeneous line construction."""
+    """Traditional homogeneous line construction with normalization."""
     # Must handle degenerate cases explicitly
     if is_at_infinity(p1) and is_at_infinity(p2):
         # Both points at infinity - special handling
@@ -226,7 +226,7 @@ When architectural unity matters, QGA provides:
 
 ##### Computational Reality Check
 
-Let's be completely honest about QGA's costs:
+The costs are extreme:
 - For 3D: uses $\mathcal{G}(6,3,0)$ with **512 dimensions**
 - Even with sparsity, each quadric needs 10-50 active components
 - Single geometric product: 500-2000 operations
@@ -260,7 +260,7 @@ Beyond the common algebras lie specialized constructions for specific domains. T
 
 ##### Compass Ruler Algebra
 
-Signature $(2,0,0)$ 2D construction algebra for geometric theorem proving with :
+Signature $(2,0,0)$ 2D construction algebra for geometric theorem proving with:
 - Encodes classical compass-ruler constructions algebraically
 - Applications in automated geometry and theorem proving
 - Educational tools for geometric reasoning
@@ -320,7 +320,7 @@ These exotic algebras demonstrate GA's versatility as a framework for geometric 
 
 #### Computational Reality Check
 
-Let's quantify the computational requirements across different algebras:
+The computational requirements across different algebras reveal stark tradeoffs:
 
 **Table 43: Geometric Algebra Computational Reality**
 
@@ -343,7 +343,7 @@ The pattern is clear: GA operations typically run 3-10× slower than specialized
 
 #### A Practical Decision Framework
 
-When confronted with a geometric computation problem, experienced practitioners follow a systematic decision process. This framework acknowledges both the power and limitations of geometric algebra:
+When confronted with a geometric computation problem, a systematic decision process acknowledges both the power and limitations of geometric algebra:
 
 **Level 1: Fundamental Paradigm Assessment**
 
@@ -403,7 +403,7 @@ Choose integration approach based on risk tolerance:
 * **Full Migration**: Only for new systems with strong architectural benefits
 * **Gradual Adoption**: Recommended for most scenarios, allows learning and measurement
 
-This decision framework reflects hard-won experience from production deployments. It acknowledges that GA is a powerful but specialized tool, excellent for certain problems but inappropriate for many others.
+This decision framework reflects the logical conclusions of rigorous engineering analysis. It acknowledges that GA is a powerful but specialized tool, excellent for certain problems but inappropriate for many others.
 
 #### Integration with Existing Systems
 
@@ -478,7 +478,7 @@ def hybrid_intersection_engine(primitives):
 
 ##### Gradual Migration: Learn While Shipping
 
-A pragmatic approach to GA adoption:
+A theoretical model for pragmatic GA adoption:
 
 1. **Identify Pain Points**: Find subsystems with many special cases
 2. **Parallel Implementation**: Build GA version alongside traditional
@@ -489,7 +489,7 @@ A pragmatic approach to GA adoption:
 
 ```python
 class MigrationStrategy:
-    """Manages gradual transition to GA."""
+    """Theoretical model for gradual transition to GA."""
 
     def __init__(self):
         self.use_ga_percentage = 0.0  # Start traditional
