@@ -6456,7 +6456,6 @@ These possibilities merit serious investigation. They're grounded in GA's demons
 **Speculative Possibilities**
 
 These ideas, while intellectually stimulating, currently lie outside scientific verification:
-- The universe might "compute" using geometric operations at a fundamental level
 - Consciousness might process information geometrically, with thoughts as multivector transformations
 - All physics might ultimately reduce to pure geometry, with particles as topological features and forces as curvatures
 - Reality might be a geometric algebra at its deepest level, with physical laws emerging from algebraic consistency
@@ -6477,11 +6476,9 @@ Such speculations can inspire research and are worth contemplating, but they req
 
 These are *possible perspectives* for future research, not predictions or claims. Each would require extensive theoretical development and experimental validation. They represent the kind of speculative but grounded thinking that advances physics—asking "what if?" while demanding rigorous proof.
 
-#### The Computational Universe: One View Among Many
+#### The Computational Universe: The Geometric Perspective
 
-The idea that reality might be fundamentally computational has gained attention across physics and philosophy. The geometric version—that the universe computes through geometric operations—represents one intriguing position in this broader debate.
-
-**The Geometric Computation Perspective**
+The idea that reality might be computational and geometric—that the universe computes through geometric operations—represents one intriguing position in this broader debate.
 
 In this view, physical processes are geometric transformations. Particles interact through geometric products. Forces arise from geometric curvatures. Quantum measurements are geometric projections. Conservation laws follow from geometric symmetries.
 
