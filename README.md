@@ -4465,7 +4465,7 @@ While GTG provides theoretical elegance, production numerical relativity exclusi
   ```
   GA formulations lack equivalent infrastructure for handling multiple refinement levels, buffer zones, and constraint preservation across levels.
 
-- **Symbolic Tensor Manipulation**: Tools like xPart and Cadabra exploit tensor symmetries:
+- **Symbolic Tensor Manipulation**: Tools like xAct and Cadabra exploit tensor symmetries:
   ```python
   # Riemann tensor symmetries reduce computation
   R_abcd = -R_bacd  # Antisymmetric in first pair
