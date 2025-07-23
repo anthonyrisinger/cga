@@ -18,19 +18,19 @@ The framework we'll explore offers three distinct types of benefits, each with a
 
 **Conceptual Benefits**: Perhaps most valuable for long-term productivity, geometric algebra reveals deep connections between tools you already use. Understanding that quaternions are simply the even-graded elements of 3D geometric algebra, or that complex numbers naturally emerge from 2D geometric algebra, creates permanent improvements in geometric intuition that enhance all future work.
 
-### The Five-Act Journey
+### The Five-Part Journey
 
 This book guides you through geometric algebra as a technology evaluation and adoption process:
 
-**Act I** explores recurring computational patterns across geometric domains. Through concrete problems—implementing reflection-based transformations, composing rotations, handling coordinate changes—we'll discover how the requirement to preserve complete geometric information naturally leads to the geometric product. Rather than presenting this as revealed truth, we'll derive its structure from engineering requirements.
+**Part I** explores recurring computational patterns across geometric domains. Through concrete problems—implementing reflection-based transformations, composing rotations, handling coordinate changes—we'll discover how the requirement to preserve complete geometric information naturally leads to the geometric product. Rather than presenting this as revealed truth, we'll derive its structure from engineering requirements.
 
-**Act II** introduces the conformal model as one particularly useful geometric algebra among several. By embedding 3D space in a 5D space with signature (4,1), translations join rotations as multiplicative transformations. We'll honestly assess the costs—increased memory usage, computational overhead—against the benefits of unified transformation handling and robust degenerate case behavior.
+**Part II** introduces the conformal model as one particularly useful geometric algebra among several. By embedding 3D space in a 5D space with signature (4,1), translations join rotations as multiplicative transformations. We'll honestly assess the costs—increased memory usage, computational overhead—against the benefits of unified transformation handling and robust degenerate case behavior.
 
-**Act III** demonstrates real applications with transparent performance analysis. We'll see where geometric algebra excels: unified transformation chains in robotics, coordinate-free algorithms in computer vision, robust intersection computations in CAD. We'll also acknowledge where specialized methods remain superior: highly optimized inner loops for specific operations, memory-constrained embedded systems, or purely 2D problems where complex numbers suffice.
+**Part III** demonstrates real applications with transparent performance analysis. We'll see where geometric algebra excels: unified transformation chains in robotics, coordinate-free algorithms in computer vision, robust intersection computations in CAD. We'll also acknowledge where specialized methods remain superior: highly optimized inner loops for specific operations, memory-constrained embedded systems, or purely 2D problems where complex numbers suffice.
 
-**Act IV** explores emerging applications in quantum computing, machine learning, and even more speculative domains where geometric structure provides insight. These frontiers show geometric algebra's potential without hyperbole—the framework provides new perspectives on entanglement, equivariant neural networks, and geometric approaches to optimization that suggest promising research directions. Where applications push into uncharted territory, we maintain the same rigorous analysis, acknowledging both theoretical promise and practical limitations.
+**Part IV** explores emerging applications in quantum computing, machine learning, and even more speculative domains where geometric structure provides insight. These frontiers show geometric algebra's potential without hyperbole—the framework provides new perspectives on entanglement, equivariant neural networks, and geometric approaches to optimization that suggest promising research directions. Where applications push into uncharted territory, we maintain the same rigorous analysis, acknowledging both theoretical promise and practical limitations.
 
-**Act V** provides implementation guidance for production systems. We'll discuss practical matters: efficient data structures for sparse multivectors, SIMD optimization strategies, and integration with existing codebases. We'll also honestly address current limitations in debugging tools and library ecosystems compared to mature alternatives, while exploring emerging solutions and best practices derived from production-focused implementations of GA.
+**Part V** provides implementation guidance for production systems. We'll discuss practical matters: efficient data structures for sparse multivectors, SIMD optimization strategies, and integration with existing codebases. We'll also honestly address current limitations in debugging tools and library ecosystems compared to mature alternatives, while exploring emerging solutions and best practices derived from production-focused implementations of GA.
 
 ### When to Use Geometric Algebra
 
@@ -197,7 +197,7 @@ A versor $V$ transforms objects via the sandwich product: $X' = VXV^{-1}$ (or $X
 
 *Armed with this notational foundation, we now begin our journey into the unifying patterns that emerge when traditional geometric tools must coordinate in increasingly complex systems.*
 
-## Act I: The Unifying Foundation
+## Part I: The Unifying Foundation
 
 The journey toward computational unity begins not with grand abstractions, but with the concrete challenges every geometric system eventually faces. Through careful analysis of these challenges, we'll discover why certain patterns emerge repeatedly across different domains, and how recognizing these patterns points toward a more unified approach.
 
@@ -726,7 +726,7 @@ Consider a robotic arm performing a complex manipulation—simultaneously rotati
 
 The fragmentation occurs because traditional representations can't preserve the complete relationship between rotation and translation. Each representation is lossy in its own way.
 
-In the conformal geometric algebra we'll develop in Act II, the geometric product extends naturally to preserve all transformation information. A motor—the conformal analog of a quaternion—captures screw motion as a single entity:
+In the conformal geometric algebra we'll develop in Part II, the geometric product extends naturally to preserve all transformation information. A motor—the conformal analog of a quaternion—captures screw motion as a single entity:
 
 $$M = \exp\left(-\frac{1}{2}(\theta L^* + d\mathbf{n}_\infty)\right)$$
 
@@ -755,7 +755,7 @@ In the next chapter, we'll see how this principle extends beyond Euclidean space
 
 *To represent all Euclidean transformations uniformly, we must venture beyond Euclidean space itself into the realm of conformal geometry.*
 
-## Act II: The Conformal Breakthrough
+## Part II: The Conformal Breakthrough
 
 The mathematics we've built gives us power—the geometric product unifies our operations, versors transform through elegant sandwich products, complex numbers and quaternions emerge naturally from the algebra of space itself. Yet we stand at an impasse. Translation, that most basic of geometric transformations, refuses to fit our multiplicative framework. We can rotate elegantly, reflect perfectly, but we cannot translate without abandoning the very patterns that make our algebra powerful.
 
@@ -2157,7 +2157,7 @@ Most production systems benefit from a hybrid approach: GA for high-level struct
 
 *The algebra of incidence provides powerful tools for geometric computation. Like any engineering choice, success comes from understanding when these tools offer the best solution for your specific needs. Next, we apply these principles to the unified treatment of computer graphics and vision, where the boundaries between synthesis and analysis dissolve under geometric algebra's unifying lens.*
 
-## Act III: Computational Practice
+## Part III: Computational Practice
 
 The mathematics stands complete. Through seven chapters, we've built the theoretical edifice—from the discovery of reflection as the fundamental operation, through the emergence of the geometric product, to the conformal model where translations join rotations as multiplicative transformations. We've unified the representation of points, lines, planes, circles, and spheres. We've shown how every transformation follows the same versor mechanism. We've discovered that intersection is universal through the meet operation.
 
@@ -4465,7 +4465,7 @@ While GTG provides theoretical elegance, production numerical relativity exclusi
   ```
   GA formulations lack equivalent infrastructure for handling multiple refinement levels, buffer zones, and constraint preservation across levels.
 
-- **Symbolic Tensor Manipulation**: Tools like xAct and Cadabra exploit tensor symmetries:
+- **Symbolic Tensor Manipulation**: Tools like xPart and Cadabra exploit tensor symmetries:
   ```python
   # Riemann tensor symmetries reduce computation
   R_abcd = -R_bacd  # Antisymmetric in first pair
@@ -4803,7 +4803,7 @@ As physics continues to seek deeper unifications—between quantum mechanics and
 
 *The geometric perspective on physics reveals deep connections between seemingly disparate theories. Whether these connections lead to new physics or simply better understanding remains an open and exciting question.*
 
-## Act IV: Expanding Horizons
+## Part IV: Expanding Horizons
 
 Our mathematical tools are complete. Through eleven chapters, we've witnessed geometric algebra transform from abstract principle to computational powerhouse—unifying transformations through the versor mechanism, revealing incidence through meet and join, accelerating robotics through motors, and clarifying physics through spinors. Yet this achievement marks not an ending but a threshold.
 
@@ -6694,13 +6694,13 @@ The journey through GA's philosophical implications brings us full circle to the
 
 *The shape of computation follows the shape of space. Whether these patterns reflect deep truth or useful organization remains an open and fascinating question.*
 
-## Act V: The Complete Reference
+## Part V: The Complete Reference
 
 The mathematics stands complete. Through fourteen chapters, we've journeyed from fragmentation to unification, from the discovery of reflection as the fundamental operation to the philosophical implications of a geometric universe. We've witnessed how geometric algebra transforms not just our calculations, but our very conception of space, transformation, and computation.
 
 But mathematics without implementation remains philosophy. The most elegant theory, the most unified framework, the most beautiful algebraic structure—all become academic exercises unless they can be reliably computed with the finite, flawed, and fascinating machines we call computers. This final part bridges that gap, transforming theoretical understanding into practical capability.
 
-Act V provides the complete practitioner's toolkit. Chapter 15 confronts the central challenge head-on: how do we preserve the perfection of continuous geometric algebra within the discrete, error-prone realm of floating-point arithmetic? The answer lies not in abandoning our principles but in understanding how the algebra itself provides the tools for robust computation. Chapter 16 then demonstrates how these robust components assemble into transformative system architectures, showing how geometric algebra doesn't just solve problems—it dissolves the boundaries between previously separate domains.
+Part V provides the complete practitioner's toolkit. Chapter 15 confronts the central challenge head-on: how do we preserve the perfection of continuous geometric algebra within the discrete, error-prone realm of floating-point arithmetic? The answer lies not in abandoning our principles but in understanding how the algebra itself provides the tools for robust computation. Chapter 16 then demonstrates how these robust components assemble into transformative system architectures, showing how geometric algebra doesn't just solve problems—it dissolves the boundaries between previously separate domains.
 
 The appendices that follow serve as both reference and foundation. From symbol glossaries to formula catalogs, from multiplication tables to implementation patterns, they provide the detailed resources that transform a reader into a practitioner. Together, these materials complete the bridge from mathematical beauty to computational reality.
 
