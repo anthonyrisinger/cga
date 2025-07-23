@@ -1,6 +1,4 @@
-# The Shape of One is Two
-
-**Geometric Algebra: A Unified Framework for Computation and Physics**
+# Geometric Algebra Constructs Meet Production Constraints Wedge
 
 ---
 
@@ -8,7 +6,7 @@
 
 Every geometric computation system eventually faces the same architectural challenge. You're building a robotics controller that needs quaternions for smooth orientation interpolation, matrices for coordinate transforms, and vector algebra for dynamics. Or you're developing a physics engine where collision detection uses Plücker coordinates, rigid body motion needs dual quaternions, and constraints require careful synchronization between position vectors and orientation representations. Each mathematical tool excels in its domain—quaternions elegantly handle 3D rotations without gimbal lock, matrices efficiently batch transform vertices, vector calculus naturally expresses fields and flows. Yet the coordination overhead between these representations creates genuine engineering friction.
 
-This book presents geometric algebra not as a replacement for these battle-tested tools, but as a framework that reveals their surprisingly elegant underlying structure. When the geometric product naturally decomposes into symmetric (inner) and antisymmetric (outer) parts, it preserves complete information about vectors' relationships—a mathematical fact that connects the dot product's metric information with the wedge product's orientational data in one unified operation. This isn't mysticism; it's engineering. The title *The Shape of One is Two* captures this concrete insight: from one product emerge two complementary aspects that together preserve all geometric information.
+This book presents geometric algebra not as a replacement for these battle-tested tools, but as a framework that reveals their surprisingly elegant underlying structure. When the geometric product naturally decomposes into symmetric (inner) and antisymmetric (outer) parts, it preserves complete information about vectors' relationships—a mathematical fact that connects the dot product's metric information with the wedge product's orientational data in one unified operation. This isn't mysticism; it's engineering.
 
 The framework we'll explore offers three distinct types of benefits, each with associated costs:
 
@@ -2552,7 +2550,7 @@ The architectural challenge emerges at the boundaries. Consider visual SLAM, aug
 
 These translations introduce both computational overhead and conceptual friction. Converting between quaternion rotations and rotation matrices for different subsystems adds unnecessary operations. Maintaining consistency between the graphics projection matrix and the computer vision camera model requires careful bookkeeping. The impedance mismatch between rendering's forward projection and vision's inverse reconstruction complicates unified pipelines. Each translation point becomes a potential source of numerical error and architectural complexity.
 
-Geometric algebra offers a coherent framework for problems at this intersection—not as a replacement for specialized tools, but as a way to reduce architectural friction when consistent geometric reasoning matters more than raw performance. The geometric product's decomposition—"The Shape of One is Two"—preserves complete information about geometric relationships, enabling unified operations across traditionally separate domains. However, this deterministic elegance must confront the probabilistic reality of modern visual computing, where uncertainty propagation and sparse optimization dominate production systems. This chapter examines where GA provides genuine engineering value for visual computing and where traditional methods remain superior.
+Geometric algebra offers a coherent framework for problems at this intersection—not as a replacement for specialized tools, but as a way to reduce architectural friction when consistent geometric reasoning matters more than raw performance. The geometric product's decomposition preserves complete information about geometric relationships, enabling unified operations across traditionally separate domains. However, this deterministic elegance must confront the probabilistic reality of modern visual computing, where uncertainty propagation and sparse optimization dominate production systems. This chapter examines where GA provides genuine engineering value for visual computing and where traditional methods remain superior.
 
 #### Camera Models: From Matrices to Geometric Incidence
 
