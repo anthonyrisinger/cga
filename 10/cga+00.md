@@ -1,4 +1,4 @@
-# Geometric Algebra Constructs Meet Production Constraints Wedge
+# Geometric Algebra is Much Too Sweet
 
 ---
 
