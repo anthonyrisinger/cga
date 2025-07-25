@@ -12,24 +12,7 @@ Geometric algebra offers a coherent framework for problems at this intersection�
 
 Traditional graphics constructs cameras through carefully assembled projection matrices. A perspective camera combines intrinsic parameters (focal length, principal point, aspect ratio) with extrinsic pose:
 
-```python
-def traditional_perspective_matrix(focal_length, principal_point, aspect_ratio, pose):
-    """Constructs 4x4 perspective projection matrix.
-
-    Efficient for GPU pipelines but couples multiple transformations.
-    """
-    # Intrinsic matrix embeds camera parameters
-    K = [[focal_length * aspect_ratio, 0, principal_point.x, 0],
-         [0, focal_length, principal_point.y, 0],
-         [0, 0, 1, 0],
-         [0, 0, 0, 1]]
-
-    # Extrinsic matrix represents camera pose
-    R_t = pose_to_matrix(pose)
-
-    # Combined projection for GPU pipeline
-    return matrix_multiply(K, R_t)
-```
+$$ FIXME $$
 
 This matrix formulation excels for fixed pinhole cameras feeding GPU rasterization pipelines. Hardware acceleration, decades of optimization, and deep integration with graphics APIs make it the practical choice for standard rendering tasks. The entire graphics ecosystem—from OpenGL to modern ray tracing APIs—assumes this representation.
 
@@ -43,25 +26,6 @@ The projection formula becomes:
 $$\text{Project}(P) = (C \wedge P \wedge \mathbf{n}_\infty) \vee \Sigma$$
 
 This formula tells a geometric story. The wedge product $C \wedge P$ creates the line between camera center and world point. Including $\mathbf{n}_\infty$ extends this to an infinite ray. The meet with surface $\Sigma$ finds where the ray intersects the image manifold. This single operation handles any camera geometry without special cases.
-
-```python
-def geometric_projection(camera_center, world_point, image_surface):
-    """Projects a point using geometric incidence.
-
-    Unified across camera types but requires conformal overhead.
-    """
-    # Construct ray from camera through point
-    ray = camera_center ^ world_point ^ n_infinity
-
-    # Find intersection with image surface
-    image_point = meet(ray, image_surface)
-
-    # Validate intersection exists and extract result
-    if grade(image_point) != expected_grade(image_surface):
-        return None  # Ray misses surface
-
-    return image_point
-```
 
 The strength of this approach lies in its generality—the same formula handles diverse camera models without special cases:
 
@@ -86,61 +50,14 @@ Cross-slits cameras, which generate rays passing through two skew lines in space
 
 #### Ray Tracing: Architectural Unity Versus Raw Speed
 
-Ray tracing exemplifies both the promise and reality of geometric unification. Traditional ray tracers maintain specialized intersection routines for each primitive type:
-
-```python
-def traditional_ray_trace(ray, scene):
-    """Traditional approach with type-specific intersections."""
-    closest_hit = None
-    closest_t = float('inf')
-
-    for obj in scene.objects:
-        if obj.type == SPHERE:
-            t = intersect_ray_sphere(ray, obj.center, obj.radius)
-        elif obj.type == PLANE:
-            t = intersect_ray_plane(ray, obj.normal, obj.distance)
-        elif obj.type == TRIANGLE:
-            t = intersect_ray_triangle(ray, obj.v0, obj.v1, obj.v2)
-        # ... additional specialized routines
-
-        if t > 0 and t < closest_t:
-            closest_t = t
-            closest_hit = Hit(t, obj)
-
-    return closest_hit
-```
-
-Each specialized routine exploits primitive-specific optimizations:
+Ray tracing exemplifies both the promise and reality of geometric unification. Traditional ray tracers maintain specialized intersection routines that exploit primitive-specific optimizations:
 - Ray-sphere uses the quadratic formula directly
 - Ray-plane reduces to a simple division
 - Ray-triangle leverages barycentric coordinates
 
 These optimizations matter. Production ray tracers process billions of ray-primitive tests. A 10% improvement in ray-triangle intersection can reduce render time by hours on complex scenes.
 
-The GA approach replaces this proliferation with a single operation:
-
-```python
-def geometric_ray_trace(ray, scene):
-    """GA approach using universal meet operation."""
-    closest_hit = None
-    closest_t = float('inf')
-
-    for obj in scene.objects:
-        # Universal intersection through meet
-        intersection = meet(ray, obj)
-
-        # Extract ray parameter if valid
-        if is_valid_intersection(intersection, obj.expected_grade):
-            t = extract_ray_parameter(ray, intersection)
-
-            if t > 0 and t < closest_t:
-                closest_t = t
-                closest_hit = Hit(t, obj, intersection)
-
-    return closest_hit
-```
-
-The architectural simplification is clear—one algorithm replaces dozens. However, the computational reality must be acknowledged:
+The GA approach replaces this proliferation with a single operation. The architectural simplification is clear—one algorithm replaces dozens. However, the computational reality must be acknowledged:
 
 **Performance Analysis**:
 - Specialized ray-sphere: ~30 floating-point operations
@@ -173,26 +90,7 @@ where $L_0$ captures traditional direction and intensity while $L_2$ is a bivect
 
 $$I = \langle N L_0 \rangle_0 + \frac{1}{2}\langle N L_2 N \rangle_0$$
 
-The second term—impossible to express cleanly in vector algebra—captures how surface orientation interacts with extended light sources:
-
-```python
-def bivector_illumination(surface_normal, light_source):
-    """Computes illumination including area light effects.
-
-    More expensive than Lambert but handles extended sources.
-    """
-    # Traditional diffuse component
-    diffuse = scalar_part(surface_normal * light_source.direction)
-
-    # Area light contribution via sandwich product
-    if has_bivector_component(light_source):
-        area_term = scalar_part(
-            sandwich_product(surface_normal, light_source.bivector)
-        ) * 0.5
-        diffuse = diffuse + area_term
-
-    return max(0, diffuse) * light_source.color
-```
+The second term—impossible to express cleanly in vector algebra—captures how surface orientation interacts with extended light sources.
 
 This bivector formulation doesn't replace Lambertian shading—it extends it. For point lights, the bivector term vanishes and we recover standard diffuse lighting. For area sources, we get analytical soft shadows without stochastic sampling. This mathematical framework naturally extends to phenomena difficult to capture in traditional formulations: polarized light transport, coherent illumination effects, and even some quantum optical phenomena when appropriately extended.
 
@@ -210,58 +108,11 @@ The bivector approach extends naturally to BSDFs (Bidirectional Scattering Distr
 
 #### Structure from Motion: Manifold Elegance vs. Sparse Reality
 
-Computer vision's structure-from-motion reconstructs 3D geometry from 2D images. Traditional approaches face fundamental challenges in parameterizing rotations for optimization:
-
-```python
-def traditional_bundle_adjustment(cameras, points, observations):
-    """Traditional approach with quaternion rotations."""
-
-    while not converged:
-        # Build Jacobian with quaternion derivatives
-        J = build_jacobian_quaternion(cameras, points, observations)
-
-        # Solve normal equations
-        delta = solve_normal_equations(J, residuals)
-
-        # Update parameters with special handling
-        for i, cam in enumerate(cameras):
-            # Quaternion update requires careful normalization
-            cam.rotation = quaternion_multiply(
-                cam.rotation,
-                exp_quaternion(delta.rotation[i])
-            )
-            cam.rotation = normalize(cam.rotation)
-
-            cam.translation = cam.translation + delta.translation[i]
-```
-
-The challenges are well-known:
+Computer vision's structure-from-motion reconstructs 3D geometry from 2D images. Current approaches face well-known challenges in parameterizing rotations for optimization:
 - Quaternions require explicit normalization after updates
 - Rotation and translation optimize separately, reducing conditioning
 - Gauge freedom requires fixing arbitrary cameras
 - Near-singular configurations need special handling
-
-GA's motor representation addresses these issues elegantly:
-
-```python
-def motor_bundle_adjustment(cameras, points, observations):
-    """GA approach using motors on natural manifold."""
-
-    while not converged:
-        # Jacobian in motor Lie algebra (bivectors)
-        J = build_jacobian_motor(cameras, points, observations)
-
-        # Solve in tangent space
-        delta_bivector = solve_normal_equations(J, residuals)
-
-        # Update on motor manifold
-        for i, cam in enumerate(cameras):
-            # Exponential map preserves manifold structure
-            update_motor = exp(delta_bivector[i])
-
-            # Motor composition needs no normalization
-            cam.motor = update_motor * cam.motor
-```
 
 The motor parameterization provides concrete engineering advantages:
 
@@ -320,41 +171,7 @@ Adopting GA for visual computing requires honest assessment of practical concern
 
 **Memory Layout**: Multivectors in conformal space require careful organization for GPU efficiency:
 
-```python
-def pack_conformal_point_for_gpu(point):
-    """Packs conformal point for coalesced GPU access.
-
-    Standard: 5 floats scattered in 32-float multivector
-    Packed: 5 contiguous floats for efficient transfer
-    """
-    # Extract non-zero components
-    packed = [
-        point.e1,      # x coordinate
-        point.e2,      # y coordinate
-        point.e3,      # z coordinate
-        point.e_plus,  # conformal weight
-        point.e_minus  # conformal scale
-    ]
-    return packed
-```
-
 GPU memory coalescing requires consecutive threads to access consecutive memory locations. Scattered multivector components break this pattern, causing significant performance degradation. Careful data structure design can mitigate but not eliminate this overhead.
-
-**Library Integration**: Production visual computing systems have deep dependencies on established libraries. Bridging requires careful interface design:
-
-```python
-def bridge_to_eigen(ga_transform):
-    """Converts GA motor to Eigen affine transformation."""
-    # Extract rotation bivector and translation
-    rotation_bivector = extract_rotation_bivector(ga_transform)
-    translation_vector = extract_translation_vector(ga_transform)
-
-    # Convert to matrix form for Eigen compatibility
-    R = bivector_to_rotation_matrix(rotation_bivector)
-    t = translation_vector.to_array()
-
-    return construct_eigen_affine(R, t)
-```
 
 **Performance Profiling**: Real-world performance depends heavily on specific operations and problem structure:
 
@@ -392,87 +209,6 @@ GA provides tangible benefits for specific visual computing scenarios:
 - Maintain GA "shadow" calculations for validation
 - Gradually migrate components as benefits prove out
 
-#### A Practical Example: Visual SLAM with GA
-
-Let's examine a complete visual SLAM pipeline to see where GA provides architectural benefits:
-
-```python
-def geometric_visual_slam(image_sequence):
-    """Visual SLAM using geometric algebra throughout.
-
-    Illustrative theoretical walkthrough of a pure GA-based pipeline
-    to demonstrate architectural concepts. This approach is not
-    computationally tractable for real-world, large-scale SLAM due
-    to the lack of sparse optimization and uncertainty handling.
-    """
-
-    # Initialize with first two frames
-    frame0, frame1 = image_sequence[0:2]
-
-    # Extract and match features
-    features0 = detect_features(frame0)
-    features1 = detect_features(frame1)
-    matches = match_features(features0, features1)
-
-    # Estimate relative pose as motor
-    M_01 = estimate_motor_from_matches(matches)
-
-    # Triangulate initial map points
-    map_points = []
-    camera_center_0 = origin()
-    camera_center_1 = transform_point(M_01, camera_center_0)
-
-    for match in matches:
-        # Construct rays in conformal space
-        ray0 = camera_center_0 ^ embed_point(match.point0) ^ n_infinity
-        ray1 = camera_center_1 ^ embed_point(match.point1) ^ n_infinity
-
-        # Find 3D point as ray intersection
-        point_3d = meet(ray0, ray1)
-        if is_finite_point(point_3d):
-            map_points.append(point_3d)
-
-    # Process remaining frames
-    cameras = [identity_motor(), M_01]
-
-    for frame in image_sequence[2:]:
-        # Predict pose using motor velocity
-        velocity_bivector = log(
-            cameras[-1] * inverse(cameras[-2])
-        )
-        predicted_motor = cameras[-1] * exp(velocity_bivector)
-
-        # Refine using PnP in motor space
-        observations = match_to_map(frame, map_points)
-        refined_motor = solve_pnp_motor(
-            observations, map_points, predicted_motor
-        )
-
-        cameras.append(refined_motor)
-
-        # Extend map with new observations
-        new_points = triangulate_new_points(
-            refined_motor, frame, map_points
-        )
-        map_points.extend(new_points)
-
-    # Global optimization on motor manifold
-    optimize_motors_and_points(
-        cameras, map_points, all_observations
-    )
-
-    return cameras, map_points
-```
-
-This implementation demonstrates GA's architectural advantages:
-- Unified representation for all geometric entities
-- Natural motion prediction in Lie algebra
-- No quaternion normalization or gimbal lock
-- Consistent operations throughout the pipeline
-- Singularity-free optimization on the correct manifold
-
-However, it cannot handle the uncertainty propagation that real SLAM requires, nor can it leverage sparse optimization techniques that make large-scale reconstruction tractable. A production system would wrap this deterministic core with probabilistic machinery, using GA for the geometric computations while maintaining traditional covariance matrices for uncertainty.
-
 #### Frontier Applications: Where GA's Generality Shines
 
 Beyond established applications, GA's framework naturally extends to emerging areas of visual computing:
@@ -505,94 +241,6 @@ The practical sweet spot for GA in visual computing:
 For production systems with fixed requirements and tight performance constraints, traditional methods often remain optimal. For large-scale reconstruction and SLAM, sparse factor graph methods dominate. The engineering decision balances architectural elegance and numerical robustness against raw performance, ecosystem maturity, and the ability to handle uncertainty.
 
 As visual computing increasingly merges graphics and vision—in AR/VR, neural rendering, and computational photography—the value of consistent geometric reasoning grows. GA provides one mathematical foundation for such systems, trading computational efficiency and probabilistic completeness for architectural coherence when that tradeoff aligns with project requirements.
-
-#### Exercises
-
-**Conceptual Questions**
-
-1. The projection formula $(C \wedge P \wedge \mathbf{n}_\infty) \vee \Sigma$ works for any image surface $\Sigma$. Explain the geometric meaning of each operation and why this provides more flexibility than projection matrices. When would this flexibility justify the computational overhead?
-
-2. Traditional bundle adjustment separates rotation and translation optimization. Explain how motor parameterization couples them naturally and why this improves convergence near singular configurations. How does this local advantage conflict with global sparse optimization strategies?
-
-3. The bivector representation of light enables analytical area light calculations. Compare the computational and visual quality tradeoffs versus Monte Carlo sampling for soft shadows.
-
-**Mathematical Derivations**
-
-1. Starting from a pinhole camera with focal length $f$ centered at origin looking along the z-axis, derive the GA formulation and show it reduces to the traditional perspective projection.
-
-2. Given two rays $R_1$ and $R_2$ from different camera positions, derive the condition for successful triangulation using the meet operation. How does this handle the degenerate case of parallel rays?
-
-3. Prove that motor interpolation $M(t) = M_1 \exp(t \log(M_1^{-1} M_2))$ produces screw motion between camera poses. Compare with separate quaternion SLERP and linear translation interpolation.
-
-**Computational Exercises**
-
-1. Implement three camera models using unified GA projection:
-   ```python
-   def test_projection_models():
-       # Test point
-       P = embed_point([1, 2, 3])
-
-       # Pinhole camera
-       C1 = embed_point([0, 0, 0])
-       plane = construct_plane([0, 0, 1], 1)  # z=1 image plane
-
-       # Spherical camera
-       C2 = embed_point([0, 0, 0])
-       sphere = construct_sphere([0, 0, 0], 1)
-
-       # Verify same formula works for both
-       # Project(P) = (C ∧ P ∧ n_∞) ∨ Σ
-   ```
-
-2. Compare ray-sphere intersection performance:
-   ```python
-   def benchmark_intersection():
-       # Traditional quadratic formula
-       # vs
-       # GA meet operation
-       #
-       # Measure: operations, accuracy, special case handling
-   ```
-
-3. Implement motor-based camera smoothing:
-   ```python
-   def smooth_camera_path(keyframes):
-       # Input: List of camera motors at keyframes
-       # Output: Smooth interpolated path
-       # Use motor log/exp for C² continuous motion
-   ```
-
-**Implementation Challenges**
-
-1. **Differentiable Renderer with GA**
-   Build a differentiable rendering system using GA throughout:
-   - Input: 3D scene with GA primitives, target images
-   - Output: Optimized scene parameters
-   - Requirements:
-     - Implement $\partial(\text{meet})/\partial(\text{parameters})$ for gradients
-     - Support multiple geometric primitive types
-     - Compare convergence with traditional parameterization
-     - Handle both geometry and appearance optimization
-
-2. **Multi-View Stereo with Geometric Consistency**
-   Create a dense reconstruction system using GA:
-   - Input: Calibrated images with known camera motors
-   - Output: Dense 3D point cloud
-   - Requirements:
-     - Use meet operation for multi-view triangulation
-     - Implement geometric consistency constraints
-     - Handle occlusions using GA visibility reasoning
-     - Compare accuracy with traditional MVS methods
-
-3. **Real-Time GA Path Tracer**
-   Develop a GPU-accelerated path tracer using GA:
-   - Input: Scene with mixed geometric primitives
-   - Output: Physically based rendering
-   - Requirements:
-     - Optimize meet operation for GPU execution
-     - Implement bivector BSDF evaluation
-     - Support area lights without sampling
-     - Achieve interactive framerates for simple scenes
 
 ---
 

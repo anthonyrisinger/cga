@@ -193,65 +193,6 @@ The geometric product requires more computation than individual traditional prod
 
 The overhead is the cost of being lossless. You pay a computational tax to ensure your fundamental operation preserves all geometric information. For individual operations, this overhead might seem wasteful. But consider a transformation pipeline with 10 steps. Traditional methods might require converting between representations at each step, losing information and accumulating errors. The geometric product maintains everything throughout, potentially saving computation overall.
 
-```python
-def geometric_product_3d(a: Vector3D, b: Vector3D) -> Multivector3D:
-    """Computes the lossless geometric product of two 3D vectors.
-
-    This preserves all geometric information, unlike dot or cross products.
-    The computational cost is higher, but we maintain complete information
-    for subsequent operations.
-    """
-
-    # Scalar part: dot product (grade 0)
-    # This captures metric information
-    scalar = a.x * b.x + a.y * b.y + a.z * b.z
-
-    # Bivector part: outer product (grade 2)
-    # This captures orientation information
-    # Note: bivectors in 3D have three components (xy, xz, yz planes)
-    bivector_xy = a.x * b.y - a.y * b.x
-    bivector_xz = a.x * b.z - a.z * b.x
-    bivector_yz = a.y * b.z - a.z * b.y
-
-    # Return complete multivector
-    # No information is lost - we can recover any traditional product from this
-    # Note: Real implementations would use sparse data structures (see Chapter 15)
-    return Multivector3D(
-        scalar=scalar,
-        vector=(0, 0, 0),  # No grade-1 part for vector product
-        bivector=(bivector_xy, bivector_xz, bivector_yz),
-        trivector=0  # No grade-3 part for vector product
-    )
-
-def extract_traditional_products(ab: Multivector3D,
-                               a_magnitude: float,
-                               b_magnitude: float) -> dict:
-    """Shows how traditional products are projections of the geometric product."""
-
-    # Dot product is just the scalar part
-    dot_product = ab.scalar
-
-    # Cross product magnitude relates to bivector magnitude
-    bivector_magnitude = sqrt(ab.bivector[0]**2 +
-                            ab.bivector[1]**2 +
-                            ab.bivector[2]**2)
-
-    # Angle between vectors (from both parts)
-    if a_magnitude > 0 and b_magnitude > 0:
-        cos_theta = dot_product / (a_magnitude * b_magnitude)
-        sin_theta = bivector_magnitude / (a_magnitude * b_magnitude)
-        angle = atan2(sin_theta, cos_theta)
-    else:
-        angle = 0
-
-    return {
-        'dot_product': dot_product,
-        'bivector_magnitude': bivector_magnitude,
-        'angle': angle,
-        'complete_information_preserved': True
-    }
-```
-
 #### A Motivating Preview: Information-Preserving Screw Motions
 
 Consider a robotic arm performing a complex manipulation—simultaneously rotating and translating its end effector along a helical path. Traditional approaches fragment this natural motion:

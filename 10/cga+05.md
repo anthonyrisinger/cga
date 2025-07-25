@@ -179,67 +179,6 @@ When implementing the conformal model, several practical issues require attentio
 4. **Extraction**: To extract the Euclidean position from a conformal point:
    $$\mathbf{p} = \frac{P - (P \cdot \mathbf{n}_\infty)\mathbf{n}_0}{-P \cdot \mathbf{n}_\infty}$$
 
-> **Implementation Blueprint: Conformal Point Operations**
-> ```python
-> # Use conformal representation when:
-> # - Handling diverse geometric types (points, lines, planes, spheres, circles)
-> # - Composing multiple transformations (rotation + translation + scaling)
-> # - Building general-purpose geometric libraries
-> #
-> # Use traditional representations when:
-> # - Working with a single geometric type (e.g., only point clouds)
-> # - Optimizing a specific operation (e.g., ray-triangle intersection)
-> # - Memory is extremely constrained
->
-> def embed_point(euclidean_p):
->     """Convert Euclidean point to conformal representation."""
->     # Compute squared magnitude for conformal component
->     p_squared = euclidean_p.x**2 + euclidean_p.y**2 + euclidean_p.z**2
->
->     # Build conformal point with explicit components
->     # P = p + (p²/2)n∞ + n₀
->     conformal_point = ConformalPoint()
->     conformal_point.e1 = euclidean_p.x
->     conformal_point.e2 = euclidean_p.y
->     conformal_point.e3 = euclidean_p.z
->     conformal_point.einf = 0.5 * p_squared
->     conformal_point.e0 = 1.0
->
->     return conformal_point
->
-> def extract_point(conformal_P):
->     """Extract Euclidean coordinates from conformal point."""
->     # Handle normalization: P·n∞ should be -1
->     infinity_component = -conformal_P.einf - conformal_P.e0
->
->     if abs(infinity_component) < EPSILON:
->         # Point at infinity - return direction
->         return EuclideanPoint(
->             conformal_P.e1,
->             conformal_P.e2,
->             conformal_P.e3
->         )
->
->     # Extract normalized Euclidean coordinates
->     scale = 1.0 / (-infinity_component)
->     return EuclideanPoint(
->         conformal_P.e1 * scale,
->         conformal_P.e2 * scale,
->         conformal_P.e3 * scale
->     )
->
-> def construct_sphere(center, radius):
->     """Build sphere from center and radius."""
->     # Start with conformal center point
->     sphere = embed_point(center)
->
->     # Adjust infinity component for radius
->     # S = C - (r²/2)n∞
->     sphere.einf = sphere.einf - 0.5 * radius * radius
->
->     return sphere
-> ```
-
 #### The Unification Achieved
 
 The embedding of Euclidean geometry into conformal space is now complete. Points, lines, planes, circles, and spheres all become elements of our 5D geometric algebra. Their relationships encode as inner products. The representation unifies previously distinct object types—spheres and planes share the same grade, circles and lines become indistinguishable in their algebraic structure.

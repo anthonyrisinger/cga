@@ -32,55 +32,7 @@ $$A \vee B = (A^* \wedge B^*)^*$$
 
 This formula remains unchanged whether $A$ and $B$ represent points, lines, planes, spheres, or any other geometric primitive. Let me be clear about what this means computationally: we're trading specialized efficiency for architectural uniformity. This is not a performance optimization—it's an architectural one.
 
-Let's examine this tradeoff concretely through line-plane intersection.
-
-**Traditional Approach**: Using parametric representation $\mathbf{p}(t) = \mathbf{p}_0 + t\mathbf{d}$ for the line and $\mathbf{n} \cdot \mathbf{x} = d$ for the plane:
-
-```python
-def line_plane_intersection_traditional(p0, d, n, plane_d):
-    """Traditional parametric line-plane intersection.
-
-    Computational cost: ~10 floating-point operations
-    Memory: p0 (3 floats) + d (3 floats) + n (3 floats) + plane_d (1 float) = 10 floats total
-    """
-    # Check if line is parallel to plane
-    denom = dot_product(n, d)
-    if abs(denom) < EPSILON:
-        # Special case: parallel or contained
-        if abs(dot_product(n, p0) - plane_d) < EPSILON:
-            return "Line in plane"
-        return "No intersection"
-
-    # Compute intersection parameter
-    t = (plane_d - dot_product(n, p0)) / denom
-
-    # Compute intersection point
-    return p0 + t * d
-```
-
-**CGA Approach**: Using the meet operation:
-
-```python
-def line_plane_intersection_cga(L, pi):
-    """CGA line-plane intersection via meet operation.
-
-    Computational cost: ~50-100 floating-point operations
-    Memory: Line uses 10 floats (sparse), plane uses 5 floats
-    Total memory for complete operation: 15 floats vs 10 floats traditional
-    """
-    # Universal intersection operation
-    I = meet(L, pi)
-
-    # Result interpretation by grade
-    if grade(I) == 1:
-        return I  # Point of intersection
-    elif grade(I) == 2:
-        return "Line contained in plane"
-    elif magnitude(I) < EPSILON:
-        return "Line parallel to plane"
-```
-
-The performance difference is stark: the CGA approach requires 5-10× more floating-point operations. However, this same `meet` function handles line-plane, line-sphere, sphere-sphere, and all other intersections. Instead of maintaining 45 specialized algorithms for 10 primitive types, we maintain one meet operation plus type-specific construction and extraction routines.
+The performance difference is stark: the CGA approach requires 5-10× more floating-point operations. However, this same `meet` function handles line-plane, line-sphere, sphere-sphere, and all other intersections. Instead of maintaining specialized algorithms for each new primitive type, one meet operation plus type-specific construction and extraction routines.
 
 #### Quantifying the Architectural Tradeoff
 
@@ -121,31 +73,6 @@ For well-conditioned problems, traditional methods remain more efficient. CGA's 
 
 Fortune's sweepline algorithm constructs Voronoi diagrams in optimal $O(n \log n)$ time—an achievement that no alternative approach can improve asymptotically. CGA offers a different perspective: Voronoi cells emerge naturally from power diagrams of zero-radius spheres.
 
-```python
-def voronoi_cell_cga(sites, query_site_index):
-    """Construct Voronoi cell using CGA.
-
-    Provides geometric insight but computationally heavier than Fortune's.
-    Value: Extends naturally to non-Euclidean geometries.
-    """
-    cell = entire_space()
-    Pj = sites[query_site_index]
-
-    for i in range(len(sites)):
-        if i == query_site_index:
-            continue
-
-        # Perpendicular bisector as simple difference
-        # Elegant insight but ~20 operations vs 6 traditional
-        bisector = sites[i] - Pj
-        bisector = normalize(bisector)
-
-        # Intersect half-space with current cell
-        cell = intersect_halfspace(cell, bisector)
-
-    return extract_boundary(cell)
-```
-
 The CGA construction offers:
 - **Advantages**: Conceptual clarity, natural generalization to power diagrams and non-Euclidean spaces
 - **Disadvantages**: $O(n^2)$ direct construction vs $O(n \log n)$ for Fortune's, ~3× more operations per bisector
@@ -165,60 +92,14 @@ This formulation provides clear geometric interpretation but requires approximat
 
 Building production CGA systems requires confronting several engineering challenges:
 
-**Memory Management**: Full multivectors in 5D conformal space have 32 components, but geometric objects exhibit natural sparsity:
-
-```python
-def sparse_multivector_storage():
-    """Efficient storage exploiting geometric sparsity.
-
-    Most geometric objects use 5-15 non-zero components.
-    Grade-separated storage with activity masks provides
-    ~5× speedup over dense storage.
-    """
-    storage = {
-        'grade_mask': uint8,      # Which grades are active
-        'grade_0': float,          # Scalar (if present)
-        'grade_1': float[5],       # Vector components
-        'grade_2': sparse_dict(),  # Bivector (typically 6-10 non-zero)
-        # ... higher grades similarly
-    }
-
-    # Memory overhead: ~20% over theoretical minimum
-    # Computation speedup: 5× for typical operations
-    return storage
-```
+**Memory Management**:
+- Full multivectors in 5D conformal space have 32 components, but geometric objects exhibit natural sparsity
 
 **SIMD Optimization Challenges**:
 - Non-uniform sparsity patterns complicate vectorization
 - Blade multiplication requires bit manipulation for sign determination
 - Memory bandwidth often limits performance more than computation
 - Best results from batching similar operations
-
-**The Mature Solution: Hybrid Implementation**:
-
-```python
-def geometric_kernel_hybrid():
-    """Production approach: GA architecture with traditional hot paths.
-
-    GA provides:
-    - High-level algorithm structure
-    - Unified geometric queries
-    - Robust degeneracy handling
-
-    Traditional methods provide:
-    - Performance-critical inner loops
-    - Well-understood numerical behavior
-    - Minimal memory footprint
-
-    Example: ray tracer using hybrid approach
-    - Scene structure uses GA for unified representation
-    - Ray-triangle uses Möller-Trumbore for inner loop
-    - Complex CSG uses meet for correctness
-
-    This hybrid approach leverages GA's architectural benefits while
-    maintaining near-baseline performance for critical operations.
-    """
-```
 
 #### When to Use CGA for Computational Geometry
 
@@ -301,85 +182,6 @@ For systems where development time, maintainability, and robustness matter as mu
 The mature approach recognizes both tools have their place. Many successful systems use CGA for high-level structure while retaining traditional algorithms for critical paths. This isn't a compromise—it's engineering wisdom, choosing the right tool for each specific requirement.
 
 As geometric systems continue to grow in complexity, the architectural advantages of unified frameworks become increasingly valuable. Not as replacements for specialized algorithms, but as complementary approaches that simplify the ever-growing challenge of robust geometric computation. These same principles of architectural simplification extend naturally into visual computing, where the boundaries between graphics and vision dissolve when viewed through the right mathematical lens.
-
-#### Exercises
-
-**Conceptual Questions**
-
-1. The meet operation requires roughly 5× more operations than specialized intersection algorithms. Under what specific circumstances is this overhead justified? Consider development time, testing complexity, and long-term maintenance costs in your answer.
-
-2. Traditional algorithms excel through specialization, while CGA provides uniformity. Design a hybrid system architecture that leverages both approaches optimally. Which components would you implement in each framework and why?
-
-3. CGA achieves better numerical conditioning by working in higher dimensions. Explain why this isn't "free"—what are the computational and memory costs of this improved conditioning?
-
-**Mathematical Derivations**
-
-1. Derive the exact operation count for line-plane intersection using:
-   - Traditional parametric substitution
-   - CGA meet operation (including dual computations)
-   Show all intermediate steps and identify where the overhead originates.
-
-2. Prove that the CGA in-circle test $P_1 \wedge P_2 \wedge P_3 \wedge P_4$ gives the same sign as the traditional determinant test. What is the computational cost ratio?
-
-3. Starting from the CGA sphere representation, show how sphere-sphere intersection via meet naturally handles all cases (disjoint, intersecting, tangent, contained). Count operations for each case.
-
-**Computational Exercises**
-
-1. Implement both traditional and CGA versions of:
-   - Line-line intersection in 3D
-   - Sphere-sphere intersection
-   - Triangle-ray intersection
-
-   Measure performance on 1 million random test cases. Plot performance ratio as a function of geometric configuration (well-conditioned vs nearly-degenerate).
-
-2. Create a Voronoi diagram generator using:
-   - Fortune's algorithm (traditional)
-   - Direct CGA construction
-   - Hybrid approach (CGA for bisectors, traditional for cell construction)
-
-   Compare performance, memory usage, and code complexity for 100 to 10,000 sites.
-
-3. Build a minimal geometric kernel handling points, lines, planes, and spheres. Implement three versions:
-   - Pure traditional (specialized algorithms)
-   - Pure CGA (meet operation only)
-   - Hybrid (CGA architecture, optimized hot paths)
-
-   Benchmark on realistic workloads and analyze the tradeoffs quantitatively.
-
-4. Profile the CGA meet operation to identify performance bottlenecks. Which operations dominate? How does performance vary with object grades and sparsity patterns?
-
-**Implementation Challenges**
-
-1. **Adaptive Precision Meet Operation**
-   Design an implementation that switches between fast floating-point and exact arithmetic based on conditioning.
-   - Input: Two geometric objects and precision requirements
-   - Output: Intersection result with guaranteed accuracy
-   - Requirements:
-     - Use interval arithmetic to detect when floating-point suffices
-     - Fall back to exact arithmetic only when necessary
-     - Maintain performance within 2× of floating-point for well-conditioned cases
-     - Provide statistics on precision escalation frequency
-
-2. **Cache-Optimized Geometric Kernel**
-   Create a hybrid geometric kernel that maximizes cache efficiency.
-   - Input: Stream of geometric queries (mixed types)
-   - Output: Query results
-   - Requirements:
-     - Use CGA for algorithm structure
-     - Batch similar operations for cache locality
-     - Implement specialized fast paths for common cases
-     - Achieve less than 50% overhead vs pure traditional
-     - Support runtime switching based on profiling
-
-3. **Non-Euclidean Extension**
-   Extend your geometric kernel to handle spherical and hyperbolic geometry.
-   - Input: Geometric primitives with specified curvature
-   - Output: Intersection results in appropriate geometry
-   - Requirements:
-     - Use signature change for different geometries
-     - Maintain unified interface across all curvatures
-     - Compare with specialized non-Euclidean algorithms
-     - Document where GA approach excels or struggles
 
 ---
 

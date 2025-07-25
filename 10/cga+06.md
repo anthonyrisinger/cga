@@ -114,55 +114,6 @@ Let's systematically examine the versors available in conformal geometric algebr
 
 Each versor type serves specific purposes. Motors are particularly valuable in robotics where screw motions are common. For simple rotations alone, quaternions remain more efficient. The power comes when composing different transformation types.
 
-```python
-def construct_rotor(axis_bivector, angle):
-    """Constructs a rotor from rotation axis and angle.
-
-    Note: axis_bivector should be normalized before use.
-    Cost: Approximately 10 floating point operations (algorithmic estimate)
-    """
-    # Ensure the bivector is normalized for rotation plane
-    B_squared = -geometric_product(axis_bivector, axis_bivector)
-    B_magnitude = sqrt(B_squared)
-    B_normalized = axis_bivector / B_magnitude
-
-    # Compute rotor via exponential map
-    cos_half = cos(angle / 2)
-    sin_half = sin(angle / 2)
-
-    # R = cos(θ/2) - sin(θ/2)B
-    rotor = scalar_plus_bivector(cos_half, -sin_half * B_normalized)
-    return rotor
-
-def construct_translator(displacement_vector):
-    """Constructs a translator from Euclidean displacement.
-
-    Cost: Approximately 5 floating point operations (algorithmic estimate)
-    Note: Much cheaper than rotation, but requires conformal embedding
-    """
-    # Build translator from Euclidean displacement
-    # T = 1 - (t·n_∞)/2
-    translator_bivector = -0.5 * outer_product(displacement_vector, n_infinity)
-    translator = scalar_plus_bivector(1.0, translator_bivector)
-    return translator
-
-def construct_motor(translation, rotation_bivector, angle):
-    """Constructs a motor combining rotation and translation.
-
-    Motor = Translation × Rotation (order matters!)
-    Cost: Approximately 20 operations for construction, 30 for each application
-    (algorithmic estimates based on operation counts)
-    """
-    # First construct individual versors
-    T = construct_translator(translation)
-    R = construct_rotor(rotation_bivector, angle)
-
-    # Motor composition: first rotate, then translate
-    # Note: geometric product of versors, not simple multiplication
-    motor = geometric_product(T, R)
-    return motor
-```
-
 #### Motors: The Crown Jewel
 
 Motors combine rotation and translation into a single operation—valuable for robotics and animation where screw motions are common. A motor represents the most general rigid body motion as:
@@ -175,57 +126,19 @@ $$M_{\text{total}} = M_n \cdots M_3 M_2 M_1$$
 
 Each multiplication handles the complex interaction between rotations and translations automatically. Compare this conceptual clarity with traditional approaches that must carefully track rotation matrices and translation vectors separately. However, remember that each motor multiplication involves full geometric products—more operations than matrix multiplication for simple cases.
 
-```python
-def compose_motors(motor_list):
-    """Composes a sequence of motors into a single transformation.
+##### Versors and Uncertainty
 
-    Cost: O(n) geometric products where n = len(motor_list)
-    Each product costs approximately 30-50 operations for typical motors
-    (algorithmic estimate)
-    """
-    # Motors compose through multiplication
-    # Apply in order: M_total = M_n * ... * M_2 * M_1
+While motors elegantly unify rigid transformations for robotics, the practitioner must recognize a fundamental limitation: versors are deterministic geometric operators. They represent a specific, known transformation, not a probability distribution over possible transformations.
 
-    total = scalar(1.0)  # Identity element
+This deterministic nature means versors cannot natively encode statistical information crucial to modern robotics:
+- No representation of uncertainty in rotation axis or angle
+- No covariance matrix over screw motion parameters
+- No native mechanism for belief propagation through kinematic chains
+- No built-in support for Kalman filtering on the SE(3) manifold
 
-    # Note: Multiplication order matters!
-    # We apply motor_list[0] first, then motor_list[1], etc.
-    for i in range(len(motor_list) - 1, -1, -1):
-        # Full geometric product required here
-        total = geometric_product(motor_list[i], total)
+Systems requiring probabilistic state estimation must rely on external frameworks. The typical approach extracts Jacobians from the versor formulation to propagate covariance matrices in a separate, traditional state space. While versors provide architectural elegance for the deterministic components of robotic systems, stochastic aspects require complementary tools.
 
-    return total
-
-def apply_motor(motor, geometric_object):
-    """Applies a motor transformation via sandwich product.
-
-    Universal operation for any geometric object.
-    Cost: 2 geometric products (approximately 60-100 operations total,
-    algorithmic estimate)
-    """
-    # Compute the reverse (inverse for normalized versors)
-    motor_reverse = reverse(motor)
-
-    # Sandwich product: M X M~
-    temp = geometric_product(motor, geometric_object)
-    transformed = geometric_product(temp, motor_reverse)
-
-    return transformed
-```
-
-> **A Note on Versors and Uncertainty**
->
-> While motors elegantly unify rigid transformations for robotics, the practitioner must recognize a fundamental limitation: versors are deterministic geometric operators. They represent a specific, known transformation, not a probability distribution over possible transformations.
->
-> This deterministic nature means versors cannot natively encode statistical information crucial to modern robotics:
-> - No representation of uncertainty in rotation axis or angle
-> - No covariance matrix over screw motion parameters
-> - No native mechanism for belief propagation through kinematic chains
-> - No built-in support for Kalman filtering on the SE(3) manifold
->
-> Systems requiring probabilistic state estimation must rely on external frameworks. The typical approach extracts Jacobians from the versor formulation to propagate covariance matrices in a separate, traditional state space. While versors provide architectural elegance for the deterministic components of robotic systems, stochastic aspects require complementary tools.
->
-> This limitation doesn't diminish the value of motors for their intended purpose—representing known transformations with unified algebra. It simply delineates the boundary where additional mathematical machinery becomes necessary.
+This limitation doesn't diminish the value of motors for their intended purpose—representing known transformations with unified algebra. It simply delineates the boundary where additional mathematical machinery becomes necessary.
 
 #### The Non-Commutativity Feature
 
@@ -265,61 +178,6 @@ This is computationally simpler than Gram-Schmidt orthogonalization. However, ve
 | Composition | Matrix multiplication + checks | Direct multiplication | Cleaner architecture |
 | Inversion | Matrix inversion $O(n^3)$ | $V^{-1} = \tilde{V}/V\tilde{V}$ | Always defined |
 
-```python
-def sandwich_product(versor, object):
-    """Applies versor transformation via sandwich product.
-
-    Optimized implementation with special case handling.
-    Cost varies by object type: 20-100 operations (algorithmic estimate)
-    """
-    # Check for identity transformation
-    if is_scalar(versor) and abs(versor - 1.0) < EPSILON:
-        return object
-
-    # Compute reverse once
-    versor_reverse = reverse(versor)
-
-    # Special case optimizations
-    if is_rotor(versor) and is_vector(object):
-        # Optimized path for rotating vectors
-        # Saves approximately 30% over general case
-        return rotor_vector_sandwich_optimized(versor, object, versor_reverse)
-
-    if is_translator(versor) and is_point(object):
-        # Direct translation formula
-        # Extract translation vector and add
-        translation = extract_translation_vector(versor)
-        return add_vectors(object, translation)
-
-    # General case: full sandwich product
-    temp = geometric_product(versor, object)
-    result = geometric_product(temp, versor_reverse)
-
-    return result
-
-def reverse(multivector):
-    """Computes the reverse of a multivector.
-
-    Reverses order of basis vectors in each term.
-    Grade k term gets factor (-1)^(k(k-1)/2)
-    Cost: O(number of grades present)
-    """
-    result = zero_multivector()
-
-    # Process each grade separately
-    for k in range(6):  # Grades 0 through 5 in conformal GA
-        grade_k_part = extract_grade(multivector, k)
-
-        # Apply grade-specific sign
-        sign = 1
-        if k % 4 == 2 or k % 4 == 3:  # Grades 2, 3, 6, 7, ...
-            sign = -1
-
-        result = add_multivectors(result, scale_multivector(grade_k_part, sign))
-
-    return result
-```
-
 #### The Unification Achieved
 
 The versor mechanism provides a single algebraic pattern for all geometric transformations:
@@ -335,70 +193,6 @@ The versor mechanism represents a powerful unifying principle in mathematics, an
 The practitioner should recognize that the exceptional closure of the versor mechanism—where the product of any two versors is another versor of the same group—is a special property of highly symmetric spaces like the conformal model. When developing geometric algebras for less-structured domains, this property may not hold, and careful constraint management may be required to ensure that composed transformations remain valid.
 
 Whether this unification justifies the computational costs depends entirely on your application's needs. For systems where architectural clarity and compositional robustness matter more than raw performance, versors offer an elegant solution. For performance-critical applications with simple transformation patterns, traditional methods remain optimal. Most mature systems benefit from a hybrid approach—using versors for high-level structure while retaining specialized algorithms for inner loops.
-
-#### Exercises
-
-**Conceptual Questions**
-
-1. Explain why translation cannot be represented multiplicatively in Euclidean space but can be in conformal space. What geometric property of the conformal model enables this? What are the memory and computational costs of this capability?
-
-2. The sandwich product $VXV^{-1}$ appears throughout mathematics and physics. Why is this pattern so universal? What are the computational implications of using it versus specialized transformation formulas?
-
-3. A motor $M = TR$ represents a screw motion. Explain geometrically why $TR \neq RT$, and describe a practical robotics scenario where this non-commutativity matters. Compare the computational cost with maintaining separate rotation and translation components.
-
-**Mathematical Derivations**
-
-1. Prove that the translator $T = 1 - \frac{\mathbf{t}\mathbf{n}_\infty}{2}$ satisfies $T^{-1} = 1 + \frac{\mathbf{t}\mathbf{n}_\infty}{2}$. What does this tell us about the computational efficiency of inverting translations?
-
-2. Show that the composition of two rotors $R_1$ and $R_2$ around intersecting axes produces either a single rotation (if the axes intersect) or a screw motion (if they're skew). Analyze the number of operations required compared to composing rotation matrices.
-
-3. Derive the formula for the generator of scaling by factor $s$: $D = \exp(\frac{\ln(s)}{2}\mathbf{n}_0\mathbf{n}_\infty)$. When would you use this versus simple scalar multiplication?
-
-4. Prove that every even versor in CGA can be written as the product of an even number of reflections. What does this mean for computational decomposition of arbitrary transformations?
-
-**Computational Exercises**
-
-1. Given a rotor $R$ representing 45° rotation around the z-axis and a translator $T$ for displacement $(1, 2, 0)$, compute the versors for:
-   - The motor $M_1 = TR$ (rotate then translate)
-   - The motor $M_2 = RT$ (translate then rotate)
-   - The difference in final position when applied to the origin
-   Compare the computational steps with traditional matrix methods.
-
-2. A robotic arm has three joints with motors $M_1$, $M_2$, and $M_3$. Write the expression for the end-effector position given base point $P_0$, and analyze the computational complexity compared to traditional forward kinematics.
-
-3. Given two points $P_1$ and $P_2$ in conformal space, find the translator $T$ that maps $P_1$ to $P_2$. How many operations does this require compared to simple vector subtraction?
-
-4. Compute the commutator $[R, T]$ where $R$ is a 90° rotation around the z-axis and $T$ is a unit translation along the x-axis. Interpret the result geometrically and discuss when this computation would be necessary in practice.
-
-**Implementation Challenges**
-
-1. **Efficient Motor Interpolation**: Design an algorithm that smoothly interpolates between two motors $M_1$ and $M_2$, producing intermediate screw motions. Your solution should:
-   - Input: Two motors, interpolation parameter $t \in [0,1]$
-   - Output: Interpolated motor $M(t)$
-   - Handle the case where $M_1$ and $M_2$ have very different rotation/translation components
-   - Maintain numerical stability
-   - Compare computational cost with separate quaternion/vector interpolation
-
-2. **Batch Transformation Engine**: Implement a system that efficiently applies a sequence of versors to a large set of geometric objects:
-   - Input: List of versors $[V_1, ..., V_n]$, list of objects $[X_1, ..., X_m]$
-   - Output: All transformed objects
-   - Optimize for the case where many objects undergo the same transformation sequence
-   - Handle mixed object types (points, lines, spheres) in a single batch
-   - Analyze memory access patterns and cache efficiency
-
-3. **Numerical Stability Monitor**: Create a system that detects and corrects numerical drift in versors during long computations:
-   - Detect when a rotor drifts from unit magnitude
-   - Identify when a motor's translation and rotation components become coupled due to error
-   - Implement automatic renormalization that preserves geometric meaning
-   - Provide error metrics to guide when renormalization is necessary
-   - Compare with traditional methods for maintaining orthogonal matrices
-
-4. **Uncertainty-Aware Motor System** (Research Challenge): Design a prototype system that augments motors with uncertainty information:
-   - Represent uncertain motors using external covariance matrices
-   - Implement belief propagation through motor chains
-   - Compare with traditional SE(3) uncertainty propagation
-   - Document the mathematical framework and computational costs
-   - Identify which aspects could benefit from native GA support in future algebras
 
 ---
 
