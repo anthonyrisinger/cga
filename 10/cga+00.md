@@ -57,7 +57,9 @@ Furthermore, while this book explores GA's applications comprehensively—includ
 
 ### A Framework, Not a Panacea
 
-This book presents geometric algebra as a valuable addition to your computational toolkit. We'll build your understanding through concrete problems, derive mathematical structures from engineering requirements, and always provide honest cost-benefit analysis. You'll finish with the ability to recognize when geometric algebra offers genuine advantages and the skills to implement it effectively.
+This book presents geometric algebra as a valuable addition to your *conceptual* toolkit, and readily concedes that its inability to represent probabilistic or otherwise nondeterministic states *immediately* excludes it from your computational toolkit for the overwhelming majority of modern applications where it might otherwise seem well placed.
+
+That said, We'll build your understanding by deriving mathematical structures from engineering requirements, and always provide honest cost-benefit analysis. You'll finish with the ability to recognize when geometric algebra offers genuine advantages and the skills to implement it effectively.
 
 The goal isn't to convince you to abandon existing tools but to add a powerful framework that unifies and clarifies geometric computation when architectural benefits justify the investment. Whether you're designing robotics systems, building physics engines, exploring quantum computing interfaces, or pursuing deeper questions about the fundamental nature of space itself, understanding geometric algebra expands your solution space in meaningful ways.
 
