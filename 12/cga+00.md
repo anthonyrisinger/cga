@@ -55,12 +55,6 @@ Part I develops pattern recognition—the ability to see when GA's structure ali
 
 If you're evaluating GA for a specific project, start with Chapter 0's capability assessment, then jump to the relevant application chapter. If you're learning GA systematically, read linearly but don't hesitate to skip mathematical proofs—understanding when and why to use GA matters more than deriving every formula.
 
-### A Personal Note
-
-I've spent years working with geometric algebra in production systems. I've seen it reduce thousand-line intersection libraries to elegant ten-line implementations. I've also seen it grind real-time systems to a halt with its computational overhead. This book shares both experiences honestly.
-
-The question isn't whether geometric algebra is "better" than traditional methods—it's whether its benefits align with your specific engineering constraints. Sometimes they do spectacularly. Sometimes they don't at all. This book will help you tell the difference.
-
 ---
 
 ### Chapter 0: Engineering Expectations
